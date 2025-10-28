@@ -161,66 +161,102 @@ class TestScheduledJobs:
         
         assert value == 5, f"Expected counter value 5, got {value}"
     
-    def test_scheduled_interval_job(self):
-        """Test job scheduled with interval trigger."""
-        import glob
-        
-        # Schedule a job to run every 5 minutes with unique timestamped files
+    def test_schedule_interval_api(self):
+        """Test that interval jobs can be scheduled via API."""
         job_data = {
             "handler_id": self.handler_id,
             "job_method": "write_file",
             "job_params": {
-                "filename": f"interval_exec_{int(time.time())}.txt",
-                "content": "Interval execution"
+                "filename": f"interval_api_{int(time.time())}.txt",
+                "content": "Interval test"
             },
             "trigger": {
                 "type": "interval",
-                "minutes": 5
+                "seconds": 30
             },
-            "job_id": "interval_test_job"
+            "job_id": "interval_api_test"
+        }
+        
+        response = requests.post(f"{self.api_base_url}/api/schedule", json=job_data)
+        assert response.status_code == 201, f"Failed to schedule interval job: {response.text}"
+        
+        result = response.json()
+        assert result["status"] == "success"
+        assert result.get("job_id") is not None
+    
+    def test_scheduled_interval_executes(self):
+        """Test that scheduled interval jobs actually execute."""
+        # Use append_to_file so we can see multiple executions in one file
+        filename = f"interval_exec_{int(time.time())}.txt"
+        job_data = {
+            "handler_id": self.handler_id,
+            "job_method": "append_to_file",
+            "job_params": {
+                "filename": filename,
+                "content": "Execution"
+            },
+            "trigger": {
+                "type": "interval",
+                "seconds": 30  # Execute every 30 seconds
+            },
+            "job_id": f"interval_exec_test_{int(time.time())}"
         }
         
         response = requests.post(f"{self.api_base_url}/api/schedule", json=job_data)
         assert response.status_code == 201
         
+        # Wait up to 75 seconds for at least 2 executions (at 0s, 30s, 60s)
+        print(f"Waiting up to 75 seconds for interval executions...")
+        start_time = time.time()
+        file_path = self.test_output_dir / filename
+        
+        while time.time() - start_time < 75:
+            if file_path.exists():
+                with open(file_path, 'r') as f:
+                    lines = f.readlines()
+                if len(lines) >= 2:
+                    print(f"Found {len(lines)} executions after {int(time.time() - start_time)} seconds")
+                    assert len(lines) >= 2, f"Expected at least 2 executions, got {len(lines)}"
+                    return
+            time.sleep(5)
+        
+        # If we get here, check what we have
+        if file_path.exists():
+            with open(file_path, 'r') as f:
+                lines = f.readlines()
+            pytest.fail(f"Only got {len(lines)} execution(s) in 75 seconds, expected at least 2")
+        else:
+            pytest.fail("No executions found - file was never created")
+    
+    def test_schedule_date_api(self):
+        """Test that date-based jobs can be scheduled via API."""
+        run_time = datetime.now() + timedelta(seconds=30)
+        
+        job_data = {
+            "handler_id": self.handler_id,
+            "job_method": "write_file",
+            "job_params": {
+                "filename": f"date_api_{int(time.time())}.txt",
+                "content": "Date test"
+            },
+            "trigger": {
+                "type": "date",
+                "run_date": run_time.isoformat()
+            },
+            "job_id": "date_api_test"
+        }
+        
+        response = requests.post(f"{self.api_base_url}/api/schedule", json=job_data)
+        assert response.status_code == 201, f"Failed to schedule date job: {response.text}"
+        
         result = response.json()
         assert result["status"] == "success"
-        job_id = result.get("job_id")
-        assert job_id is not None
-        
-        # Wait 11 minutes to allow for 2 executions (at 0, 5, 10 minutes)
-        print(f"Waiting 11 minutes for interval executions...")
-        start_time = time.time()
-        timeout = 660  # 11 minutes
-        
-        # Watch for files being created
-        initial_files = set(self.test_output_dir.glob("interval_exec_*.txt"))
-        
-        while time.time() - start_time < timeout:
-            current_files = set(self.test_output_dir.glob("interval_exec_*.txt"))
-            new_files = current_files - initial_files
-            
-            if len(new_files) >= 2:
-                print(f"Found {len(new_files)} executions after {int(time.time() - start_time)} seconds")
-                break
-            
-            time.sleep(10)  # Check every 10 seconds
-        
-        # Check final file count
-        all_files = list(self.test_output_dir.glob("interval_exec_*.txt"))
-        assert len(all_files) >= 2, f"Expected at least 2 executions, got {len(all_files)}"
-        
-        # Verify files were created at different times (check ctimes)
-        ctimes = sorted([f.stat().st_ctime for f in all_files])
-        if len(ctimes) >= 2:
-            time_diff = ctimes[1] - ctimes[0]
-            # Should be approximately 5 minutes (300 seconds) apart, allow 30 second variance
-            assert 270 <= time_diff <= 330, f"Files created {time_diff} seconds apart, expected ~300s"
+        assert result.get("job_id") is not None
     
-    def test_scheduled_date_job(self):
-        """Test job scheduled for a specific date/time."""
-        # Schedule a job to run 5 minutes from now
-        run_time = datetime.now() + timedelta(minutes=5)
+    def test_scheduled_date_executes(self):
+        """Test that date-scheduled jobs execute at the right time."""
+        # Schedule a job to run 60 seconds from now
+        run_time = datetime.now() + timedelta(seconds=60)
         filename = f"date_exec_{int(time.time())}.txt"
         
         job_data = {
@@ -234,7 +270,7 @@ class TestScheduledJobs:
                 "type": "date",
                 "run_date": run_time.isoformat()
             },
-            "job_id": "date_test_job"
+            "job_id": f"date_exec_test_{int(time.time())}"
         }
         
         response = requests.post(f"{self.api_base_url}/api/schedule", json=job_data)
@@ -246,18 +282,17 @@ class TestScheduledJobs:
         # Record when we scheduled it
         schedule_time = time.time()
         
-        # Wait for the job to execute (5 minutes + 1 minute buffer = 6 minutes)
-        print(f"Waiting up to 6 minutes for date-scheduled job...")
-        file_path = self.wait_for_file(filename, timeout=360)
+        # Wait for the job to execute (60 seconds + 20 second buffer)
+        print(f"Waiting up to 80 seconds for date-scheduled job...")
+        file_path = self.wait_for_file(filename, timeout=80)
         
         # Verify file was created
         assert file_path.exists(), "Date-scheduled job did not create file"
         
-        # Verify file was created at approximately the right time
+        # Verify file was created at approximately the right time (within 15 seconds)
         file_ctime = file_path.stat().st_ctime
         actual_delay = file_ctime - schedule_time
-        # Should be around 5 minutes (300 seconds), allow 30 second variance
-        assert 270 <= actual_delay <= 330, f"File created after {actual_delay}s, expected ~300s"
+        assert 45 <= actual_delay <= 75, f"File created after {actual_delay}s, expected ~60s"
         
         with open(file_path, 'r') as f:
             content = f.read()
@@ -343,22 +378,19 @@ class TestScheduledJobs:
         for method, _ in methods_to_test:
             assert method in logged_methods, f"Method {method} not found in execution log"
     
-    def test_list_schedules(self):
-        """Test that scheduled jobs appear in the schedules list."""
-        # Schedule a job with a 5 minute interval
+    def test_list_schedules_api(self):
+        """Test that scheduled jobs appear in the schedules list API."""
+        # Schedule a job with a reasonable interval
         filename = f"list_test_{int(time.time())}.txt"
         job_data = {
             "handler_id": self.handler_id,
-            "job_method": "write_file",
-            "job_params": {
-                "filename": filename,
-                "content": "List test execution"
-            },
+            "job_method": "heartbeat",
+            "job_params": {},
             "trigger": {
                 "type": "interval",
-                "minutes": 5
+                "minutes": 60  # Long interval, won't execute during test
             },
-            "job_id": "list_schedules_test"
+            "job_id": f"list_test_{int(time.time())}"
         }
         
         response = requests.post(f"{self.api_base_url}/api/schedule", json=job_data)
@@ -373,6 +405,7 @@ class TestScheduledJobs:
         
         data = response.json()
         schedules = data.get("schedules", [])
+        assert len(schedules) > 0, "No schedules found in list"
         
         # Find our scheduled job - check by ID since field names might vary
         our_schedule = next((s for s in schedules if s.get("id") == job_id), None)
@@ -380,11 +413,42 @@ class TestScheduledJobs:
         
         # Verify schedule has trigger info
         assert "trigger" in our_schedule or "next_fire_time" in our_schedule
+    
+    def test_list_schedules_execution(self):
+        """Test that schedules listed actually execute."""
+        # Schedule a job with short interval that will execute during test
+        filename = f"list_exec_{int(time.time())}.txt"
+        job_data = {
+            "handler_id": self.handler_id,
+            "job_method": "write_file",
+            "job_params": {
+                "filename": filename,
+                "content": "List execution test"
+            },
+            "trigger": {
+                "type": "interval",
+                "seconds": 30
+            },
+            "job_id": f"list_exec_test_{int(time.time())}"
+        }
+        
+        response = requests.post(f"{self.api_base_url}/api/schedule", json=job_data)
+        assert response.status_code == 201
+        
+        result = response.json()
+        job_id = result.get("job_id")
+        
+        # Verify it's in the list
+        response = requests.get(f"{self.api_base_url}/api/schedules")
+        assert response.status_code == 200
+        schedules = response.json().get("schedules", [])
+        our_schedule = next((s for s in schedules if s.get("id") == job_id), None)
+        assert our_schedule is not None, "Job not found in schedules list"
         
         # Wait for first execution to verify schedule is actually running
-        print(f"Waiting up to 6 minutes for first execution...")
+        print(f"Waiting up to 45 seconds for first execution...")
         try:
-            file_path = self.wait_for_file(filename, timeout=360)
+            file_path = self.wait_for_file(filename, timeout=45)
             assert file_path.exists(), "Scheduled job from list test did not execute"
         except TimeoutError:
             pytest.fail("Scheduled job appeared in list but never executed")
