@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 CONFIG_FILE_PATH = "config.yaml"
 README_FILE_PATH = "README.md"
 REGISTRY_FILE_PATH = "handler_registry.yaml"
-DATABASE_URL = "sqlite:///schedulezero_jobs.db"
+DATABASE_URL = "sqlite+aiosqlite:///schedulezero_jobs.db"
 
 # Network Configuration (Defaults to localhost)
 TORNADO_ADDRESS = os.environ.get("SCHEDULEZERO_TORNADO_ADDR", "127.0.0.1")

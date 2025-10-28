@@ -13,6 +13,7 @@ import time
 import json
 import pytest
 import requests
+import sqlite3
 from pathlib import Path
 from datetime import datetime, timedelta
 
@@ -27,6 +28,7 @@ class TestScheduledJobs:
         self.api_base_url = api_base_url
         self.handler_id = test_handler_id
         self.test_output_dir = test_output_dir
+        self.db_path = Path("schedulezero_jobs.db")
         
         # Setup: Clear test output directory
         if self.test_output_dir.exists():
@@ -43,6 +45,28 @@ class TestScheduledJobs:
         #     for file in self.test_output_dir.iterdir():
         #         if file.is_file():
         #             file.unlink()
+    
+    def query_db(self, query):
+        """Execute a query on the APScheduler database."""
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute(query)
+        results = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return results
+    
+    def get_tasks_from_db(self):
+        """Get all tasks from the database."""
+        return self.query_db("SELECT * FROM tasks")
+    
+    def get_schedules_from_db(self):
+        """Get all schedules from the database."""
+        return self.query_db("SELECT id, task_id, paused, next_fire_time FROM schedules")
+    
+    def get_jobs_from_db(self):
+        """Get all jobs from the database."""
+        return self.query_db("SELECT id, task_id, schedule_id, created_at FROM jobs")
     
     def wait_for_file(self, filename, timeout=30, check_interval=1):
         """
@@ -106,6 +130,104 @@ class TestScheduledJobs:
         
         for method in expected_methods:
             assert method in actual_methods, f"Method {method} not found in registered methods"
+    
+    def test_database_task_registration(self):
+        """DIAGNOSTIC: Verify that job_executor task is registered in APScheduler database."""
+        tasks = self.get_tasks_from_db()
+        print(f"\nTasks in database: {tasks}")
+        
+        assert len(tasks) > 0, "No tasks found in database - job_executor was not registered!"
+        
+        # Look for our job_executor task
+        task_ids = [t['id'] for t in tasks]
+        assert 'job_executor' in task_ids, f"job_executor not found in tasks. Found: {task_ids}"
+        
+        # Get the job_executor task details
+        job_executor_task = next(t for t in tasks if t['id'] == 'job_executor')
+        print(f"job_executor task: {job_executor_task}")
+        assert job_executor_task['job_executor'] is not None
+    
+    def test_schedule_creates_database_entry(self):
+        """DIAGNOSTIC: Verify that creating a schedule writes to the database."""
+        # Get initial schedule count
+        initial_schedules = self.get_schedules_from_db()
+        initial_count = len(initial_schedules)
+        print(f"\nInitial schedules in DB: {initial_count}")
+        
+        # Create a schedule
+        job_data = {
+            "handler_id": self.handler_id,
+            "job_method": "heartbeat",
+            "job_params": {},
+            "trigger": {
+                "type": "interval",
+                "minutes": 60
+            },
+            "job_id": f"diagnostic_test_{int(time.time())}"
+        }
+        
+        response = requests.post(f"{self.api_base_url}/api/schedule", json=job_data)
+        assert response.status_code == 201, f"Failed to create schedule: {response.text}"
+        
+        result = response.json()
+        job_id = result.get("job_id")
+        print(f"Created schedule with job_id: {job_id}")
+        
+        # Give it a moment to persist
+        time.sleep(0.5)
+        
+        # Check database
+        schedules = self.get_schedules_from_db()
+        print(f"Schedules after creation: {schedules}")
+        
+        assert len(schedules) > initial_count, f"Schedule count did not increase! Was {initial_count}, still {len(schedules)}"
+        
+        # Find our schedule
+        our_schedule = next((s for s in schedules if s['id'] == job_id), None)
+        assert our_schedule is not None, f"Schedule {job_id} not found in database. Found: {[s['id'] for s in schedules]}"
+        
+        # Verify it references the job_executor task
+        assert our_schedule['task_id'] == 'job_executor', f"Schedule task_id is '{our_schedule['task_id']}', expected 'job_executor'"
+        assert our_schedule['next_fire_time'] is not None, "Schedule has no next_fire_time!"
+        print(f"✓ Schedule verified in database with task_id='job_executor' and next_fire_time={our_schedule['next_fire_time']}")
+    
+    def test_schedule_api_vs_database(self):
+        """DIAGNOSTIC: Compare /api/schedules endpoint with database contents."""
+        # Create a schedule
+        job_data = {
+            "handler_id": self.handler_id,
+            "job_method": "heartbeat",
+            "job_params": {},
+            "trigger": {
+                "type": "interval",
+                "minutes": 30
+            },
+            "job_id": f"api_test_{int(time.time())}"
+        }
+        
+        response = requests.post(f"{self.api_base_url}/api/schedule", json=job_data)
+        assert response.status_code == 201
+        job_id = response.json().get("job_id")
+        
+        time.sleep(0.5)
+        
+        # Check database directly
+        db_schedules = self.get_schedules_from_db()
+        print(f"\nSchedules in database: {db_schedules}")
+        
+        # Check API endpoint
+        response = requests.get(f"{self.api_base_url}/api/schedules")
+        assert response.status_code == 200
+        api_schedules = response.json().get("schedules", [])
+        print(f"Schedules from API: {api_schedules}")
+        
+        # Compare
+        assert len(db_schedules) > 0, "Database has no schedules!"
+        
+        if len(api_schedules) == 0:
+            pytest.fail(f"API returned 0 schedules but database has {len(db_schedules)}! This is the bug.")
+        
+        assert len(api_schedules) == len(db_schedules), f"Mismatch: API has {len(api_schedules)}, DB has {len(db_schedules)}"
     
     def test_run_now_write_file(self):
         """Test immediate execution of write_file job."""

@@ -12,6 +12,7 @@ import tornado.web
 
 from apscheduler import AsyncScheduler, RunState
 from apscheduler.datastores.sqlalchemy import SQLAlchemyDataStore
+from apscheduler.executors.async_ import AsyncJobExecutor
 
 from .logging_config import setup_logging, get_logger
 from .app_configuration import (
@@ -148,7 +149,16 @@ async def start_server():
         logger.critical(f"Failed to create datastore: {e}", method="start_server", exc_info=True)
         return
     
-    scheduler = AsyncScheduler(data_store=data_store)
+    # Configure APScheduler with async job executor
+    # This is critical - without a job executor, schedules won't actually execute!
+    job_executors = {
+        "default": AsyncJobExecutor()
+    }
+    
+    scheduler = AsyncScheduler(
+        data_store=data_store,
+        job_executors=job_executors
+    )
     
     # Initialize job executor
     job_executor = JobExecutor(registry_manager)
@@ -172,13 +182,18 @@ async def start_server():
         logger.critical("ZMQ server task failed to start", method="start_server")
         return
     
-    # Start APScheduler
+    # Start APScheduler with persistent data store using async context manager
+    # The context manager starts both the data store and scheduler
     async with scheduler:
-        # Register the job_executor as a task in APScheduler AFTER scheduler starts
-        # This allows APScheduler to serialize/reference it properly
+        # IMPORTANT: Register the job_executor as a task in APScheduler AFTER scheduler starts
+        # This allows APScheduler to serialize/reference it properly and persist to the database
         await scheduler.configure_task("job_executor", func=job_executor)
         
-        logger.info("APScheduler started", method="start_server")
+        # CRITICAL: Start the scheduler's background worker to actually process schedules!
+        # Without this, schedules are created but never executed
+        await scheduler.start_in_background()
+        
+        logger.info("APScheduler started with persistent data store", method="start_server")
         
         # Start Tornado web server
         try:

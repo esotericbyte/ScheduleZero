@@ -55,19 +55,16 @@ Run the following in separate terminals:
 
 **Terminal 1 - Start Server:**
 ```powershell
-cd c:\Users\johnl\windev\schedule-zero
 poetry run schedule-zero-server
 ```
 
 **Terminal 2 - Start Handler:**
 ```powershell
-cd c:\Users\johnl\windev\schedule-zero
 poetry run schedule-zero-handler
 ```
 
 **Terminal 3 - Run Tests:**
 ```powershell
-cd c:\Users\johnl\windev\schedule-zero
 poetry run python test_schedule.py
 ```
 
