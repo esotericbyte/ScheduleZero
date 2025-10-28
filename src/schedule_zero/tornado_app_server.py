@@ -4,7 +4,6 @@ ScheduleZero Main Server
 Simplified main server file that orchestrates all components.
 """
 import asyncio
-import logging
 import os
 import signal
 
@@ -14,6 +13,7 @@ import tornado.web
 from apscheduler import AsyncScheduler, RunState
 from apscheduler.datastores.sqlalchemy import SQLAlchemyDataStore
 
+from .logging_config import setup_logging, get_logger
 from .app_configuration import (
     load_config,
     get_database_url,
@@ -37,9 +37,9 @@ from .api import (
     SchedulesViewHandler
 )
 
-# --- Logging Setup ---
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+# Initialize logging
+setup_logging(level=os.environ.get("LOG_LEVEL", "INFO"), format_style="detailed")
+logger = get_logger(__name__, component="TornadoServer")
 
 
 def log_function(handler):
@@ -53,21 +53,17 @@ def log_function(handler):
         return
     
     # Log everything else normally
-    if handler.get_status() < 400:
-        log_method = logging.info
-    elif handler.get_status() < 500:
-        log_method = logging.warning
-    else:
-        log_method = logging.error
-    
     request_time = 1000.0 * handler.request.request_time()
-    log_method(
-        "%d %s %s (%.2fms)",
-        handler.get_status(),
-        handler.request.method,
-        handler.request.uri,
-        request_time,
-    )
+    status = handler.get_status()
+    
+    log_msg = f"{status} {handler.request.method} {handler.request.uri} ({request_time:.2f}ms)"
+    
+    if status < 400:
+        logger.debug(log_msg, method="http_request")
+    elif status < 500:
+        logger.warning(log_msg, method="http_request")
+    else:
+        logger.error(log_msg, method="http_request")
 
 # --- Global State ---
 scheduler: AsyncScheduler | None = None
@@ -133,7 +129,7 @@ async def start_server():
     """Initialize and start all server components."""
     global scheduler, rpc_server, registry_manager, job_executor
     
-    logger.info("Starting ScheduleZero Server...")
+    logger.info("Starting ScheduleZero Server", method="start_server")
     
     # Load configuration
     config = load_config()
@@ -144,12 +140,12 @@ async def start_server():
     
     # Initialize database and scheduler
     db_url = os.environ.get("SCHEDULEZERO_DATABASE_URL", get_database_url())
-    logger.info(f"Using database URL: {db_url}")
+    logger.info(f"Using database: {db_url}", method="start_server")
     
     try:
         data_store = SQLAlchemyDataStore(db_url)
     except Exception as e:
-        logger.critical(f"Failed to create SQLAlchemy datastore for {db_url}: {e}", exc_info=True)
+        logger.critical(f"Failed to create datastore: {e}", method="start_server", exc_info=True)
         return
     
     scheduler = AsyncScheduler(data_store=data_store)
@@ -173,20 +169,25 @@ async def start_server():
     # Give ZMQ server a moment to start
     await asyncio.sleep(0.5)
     if not rpc_server.task or rpc_server.task.done():
-        logger.critical("ZMQ server task failed to start. Check logs. Exiting.")
+        logger.critical("ZMQ server task failed to start", method="start_server")
         return
     
     # Start APScheduler
     async with scheduler:
-        logger.info("APScheduler started.")
+        # Register the job_executor as a task in APScheduler AFTER scheduler starts
+        # This allows APScheduler to serialize/reference it properly
+        await scheduler.configure_task("job_executor", func=job_executor)
+        
+        logger.info("APScheduler started", method="start_server")
         
         # Start Tornado web server
         try:
             app = make_tornado_app(config, registry_manager, scheduler, job_executor)
             app.listen(TORNADO_PORT, address=TORNADO_ADDRESS)
-            logger.info(f"Tornado server listening on http://{TORNADO_ADDRESS}:{TORNADO_PORT}")
+            logger.info("Tornado server ready", method="start_server",
+                       address=TORNADO_ADDRESS, port=TORNADO_PORT)
         except Exception as e:
-            logger.critical(f"Failed to start Tornado server: {e}", exc_info=True)
+            logger.critical(f"Failed to start Tornado: {e}", method="start_server", exc_info=True)
             return
         
         # Keep running until interrupted
@@ -195,36 +196,35 @@ async def start_server():
 
 async def shutdown():
     """Gracefully shutdown all server components."""
-    logger.info("Initiating shutdown...")
+    logger.info("Initiating shutdown", method="shutdown")
     
     # Stop ZMQ registration server
     if rpc_server:
-        logger.info("Shutting down ZMQ server...")
+        logger.info("Shutting down ZMQ server", method="shutdown")
         await rpc_server.stop()
     
     # Stop APScheduler
     if scheduler and scheduler.state == RunState.started:
-        logger.info("Shutting down APScheduler...")
+        logger.info("Shutting down APScheduler", method="shutdown")
         try:
             await scheduler.stop()
             await scheduler.wait_until_stopped()
-            logger.info("APScheduler stopped.")
+            logger.info("APScheduler stopped", method="shutdown")
         except Exception as e:
-            logger.error(f"Error stopping scheduler: {e}", exc_info=True)
+            logger.error(f"Error stopping scheduler: {e}", method="shutdown", exc_info=True)
     
     # Close handler clients
     if registry_manager:
-        logger.info("Closing handler clients...")
+        logger.info("Closing handler clients", method="shutdown")
         loop = asyncio.get_running_loop()
         await registry_manager.close_all_clients(loop)
     
-    logger.info("Shutdown sequence complete.")
+    logger.info("Shutdown sequence complete", method="shutdown")
 
 
 def handle_signal(sig, frame):
     """Handle interrupt signals."""
-    logger.info(f"Received signal {sig}. Initiating graceful shutdown...")
-    logger.info("Running shutdown sequence...")
+    logger.info(f"Received signal {sig}", method="handle_signal")
     asyncio.create_task(shutdown())
     # Stop the event loop
     asyncio.get_event_loop().stop()
@@ -239,11 +239,10 @@ def main():
     try:
         asyncio.run(start_server())
     except KeyboardInterrupt:
-        logger.info("Received keyboard interrupt, shutting down...")
-        logger.info("Running shutdown sequence...")
+        logger.info("Keyboard interrupt received", method="main")
         asyncio.run(shutdown())
     finally:
-        logger.info("Server stopped.")
+        logger.info("Server stopped", method="main")
 
 
 if __name__ == "__main__":

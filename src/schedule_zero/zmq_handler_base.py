@@ -6,13 +6,14 @@ ScheduleZero server using ZeroMQ. No gevent, no monkey patching - clean
 threading with ZeroMQ.
 """
 import json
-import logging
 import threading
 import time
 import zmq
 from typing import Callable, Dict
 
-logger = logging.getLogger(__name__)
+from .logging_config import get_logger
+
+logger = get_logger(__name__, component="ZMQHandlerBase")
 
 
 class ZMQHandlerBase:
@@ -132,19 +133,22 @@ class ZMQHandlerBase:
             self.handler_socket = self.context.socket(zmq.REP)
             self.handler_socket.setsockopt(zmq.RCVTIMEO, 1000)  # 1 second timeout for polling
             self.handler_socket.bind(self.handler_address)
-            logger.info(f"Handler server listening on {self.handler_address}")
+            logger.info("Handler server listening", method="_run_handler_server", 
+                       address=self.handler_address)
             
             while not self.shutdown_event.is_set():
                 try:
                     # Try to receive a message
+                    logger.trace_event("socket_poll", method="_run_handler_server")
                     message = self.handler_socket.recv_string()
-                    logger.debug(f"Received message: {message}")
+                    logger.info("Message received", method="_run_handler_server", 
+                               message_len=len(message))
                     
                     # Parse request
                     try:
                         request = json.loads(message)
                     except json.JSONDecodeError as e:
-                        logger.error(f"Invalid JSON request: {e}")
+                        logger.error(f"Invalid JSON: {e}", method="_run_handler_server")
                         response = {"success": False, "error": "Invalid JSON"}
                         self.handler_socket.send_string(json.dumps(response))
                         continue
@@ -154,13 +158,15 @@ class ZMQHandlerBase:
                     
                     # Send response
                     self.handler_socket.send_string(json.dumps(response))
-                    logger.debug(f"Sent response: {response}")
+                    logger.info("Response sent", method="_run_handler_server",
+                               success=response.get("success"))
                     
                 except zmq.Again:
                     # Timeout - just continue to check shutdown event
                     continue
                 except Exception as e:
-                    logger.error(f"Error processing request: {e}", exc_info=True)
+                    logger.error(f"Error processing request: {e}", method="_run_handler_server", 
+                               exc_info=True)
                     # Try to send error response
                     try:
                         error_response = {"success": False, "error": str(e)}
@@ -169,9 +175,10 @@ class ZMQHandlerBase:
                         pass
         
         except Exception as e:
-            logger.error(f"Failed to bind or run handler server on {self.handler_address}: {e}", exc_info=True)
+            logger.error(f"Failed to run handler server: {e}", method="_run_handler_server",
+                        address=self.handler_address, exc_info=True)
         finally:
-            logger.info("Handler server shutting down")
+            logger.info("Handler server shutting down", method="_run_handler_server")
             if self.handler_socket:
                 self.handler_socket.close()
     

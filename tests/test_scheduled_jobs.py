@@ -112,13 +112,13 @@ class TestScheduledJobs:
         # Schedule a job to run immediately
         job_data = {
             "handler_id": self.handler_id,
-            "method_name": "write_file",
+            "job_method": "write_file",
             "job_params": {
                 "filename": "test_immediate.txt",
                 "content": "Hello from immediate execution!"
             }
         }
-        
+
         response = requests.post(f"{self.api_base_url}/api/run_now", json=job_data)
         assert response.status_code == 200
         
@@ -140,7 +140,7 @@ class TestScheduledJobs:
         for i in range(5):
             job_data = {
                 "handler_id": self.handler_id,
-                "method_name": "increment_counter",
+                "job_method": "increment_counter",
                 "job_params": {
                     "counter_name": "test_counter"
                 }
@@ -166,7 +166,7 @@ class TestScheduledJobs:
         # Schedule a job to run every 3 seconds for a short duration
         job_data = {
             "handler_id": self.handler_id,
-            "method_name": "append_to_file",
+            "job_method": "append_to_file",
             "job_params": {
                 "filename": "interval_test.txt",
                 "content": "Interval execution"
@@ -175,11 +175,11 @@ class TestScheduledJobs:
                 "type": "interval",
                 "seconds": 3
             },
-            "task_id": "interval_test_job"
+            "job_id": "interval_test_job"
         }
         
         response = requests.post(f"{self.api_base_url}/api/schedule", json=job_data)
-        assert response.status_code == 200
+        assert response.status_code == 201
         
         result = response.json()
         assert result["status"] == "success"
@@ -210,7 +210,7 @@ class TestScheduledJobs:
         
         job_data = {
             "handler_id": self.handler_id,
-            "method_name": "write_file",
+            "job_method": "write_file",
             "job_params": {
                 "filename": "date_test.txt",
                 "content": f"Executed at scheduled time: {run_time.isoformat()}"
@@ -219,11 +219,11 @@ class TestScheduledJobs:
                 "type": "date",
                 "run_date": run_time.isoformat()
             },
-            "task_id": "date_test_job"
+            "job_id": "date_test_job"
         }
         
         response = requests.post(f"{self.api_base_url}/api/schedule", json=job_data)
-        assert response.status_code == 200
+        assert response.status_code == 201
         
         result = response.json()
         assert result["status"] == "success"
@@ -245,7 +245,7 @@ class TestScheduledJobs:
         for i in range(3):
             job_data = {
                 "handler_id": self.handler_id,
-                "method_name": "heartbeat",
+                "job_method": "heartbeat",
                 "job_params": {}
             }
             requests.post(f"{self.api_base_url}/api/run_now", json=job_data)
@@ -255,7 +255,7 @@ class TestScheduledJobs:
         # Now generate a report
         job_data = {
             "handler_id": self.handler_id,
-            "method_name": "generate_report",
+            "job_method": "generate_report",
             "job_params": {
                 "report_name": "test_report"
             }
@@ -284,7 +284,7 @@ class TestScheduledJobs:
         # Clear any existing log
         job_data = {
             "handler_id": self.handler_id,
-            "method_name": "clear_output",
+            "job_method": "clear_output",
             "job_params": {}
         }
         requests.post(f"{self.api_base_url}/api/run_now", json=job_data)
@@ -300,7 +300,7 @@ class TestScheduledJobs:
         for method, params in methods_to_test:
             job_data = {
                 "handler_id": self.handler_id,
-                "method_name": method,
+                "job_method": method,
                 "job_params": params
             }
             response = requests.post(f"{self.api_base_url}/api/run_now", json=job_data)
@@ -323,17 +323,17 @@ class TestScheduledJobs:
         # Schedule a job
         job_data = {
             "handler_id": self.handler_id,
-            "method_name": "heartbeat",
+            "job_method": "heartbeat",
             "job_params": {},
             "trigger": {
                 "type": "interval",
                 "seconds": 60  # Long interval so it doesn't execute during test
             },
-            "task_id": "list_schedules_test"
+            "job_id": "list_schedules_test"
         }
         
         response = requests.post(f"{self.api_base_url}/api/schedule", json=job_data)
-        assert response.status_code == 200
+        assert response.status_code == 201
         
         result = response.json()
         job_id = result.get("job_id")
@@ -357,3 +357,5 @@ class TestScheduledJobs:
 if __name__ == "__main__":
     # Run pytest with verbose output
     pytest.main([__file__, "-v", "-s"])
+
+

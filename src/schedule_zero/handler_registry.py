@@ -4,7 +4,6 @@ Manages registration, persistence, and status tracking of remote job handlers.
 """
 
 import os
-import logging
 import threading
 import yaml
 import asyncio
@@ -12,8 +11,9 @@ from datetime import datetime
 
 from . import app_configuration as cfg
 from .zmq_client import ZMQClient
+from .logging_config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__, component="HandlerRegistry")
 
 
 class RegistryManager:
@@ -53,9 +53,11 @@ class RegistryManager:
                 
                 with open(self.registry_path, 'w') as f:
                     yaml.safe_dump(serializable_registry, f, default_flow_style=False)
-                logger.debug(f"Registry saved to {self.registry_path}")
+                logger.debug("Registry saved", method="save", path=self.registry_path, 
+                           count=len(serializable_registry))
             except Exception as e:
-                logger.error(f"Failed to save registry to {self.registry_path}: {e}", exc_info=True)
+                logger.error(f"Failed to save registry: {e}", method="save", 
+                           path=self.registry_path, exc_info=True)
     
     def load(self):
         """Load the handler registry from a YAML file."""
@@ -76,12 +78,15 @@ class RegistryManager:
                             'status': info.get('status', 'unknown'),
                             'client': None  # Clients are created lazily
                         }
-                    logger.info(f"Loaded handler registry from {self.registry_path}. Found {len(self.registry)} handlers.")
+                    logger.info("Registry loaded", method="load", path=self.registry_path, 
+                              count=len(self.registry))
                 except Exception as e:
-                    logger.error(f"Failed to load registry from {self.registry_path}: {e}", exc_info=True)
+                    logger.error(f"Failed to load registry: {e}", method="load", 
+                               path=self.registry_path, exc_info=True)
                     self.registry = {}
         else:
-            logger.info(f"Registry file '{self.registry_path}' not found. Starting with an empty registry.")
+            logger.info("Registry file not found, starting empty", method="load", 
+                       path=self.registry_path)
             self.registry = {}
     
     def get_client(self, handler_id: str) -> ZMQClient | None:
@@ -98,7 +103,7 @@ class RegistryManager:
             handler_info = self.registry.get(handler_id)
         
         if not handler_info:
-            logger.error(f"Handler '{handler_id}' not found in registry.")
+            logger.error(f"Handler not found", method="get_client", handler_id=handler_id)
             return None
         
         client = handler_info.get('client')
@@ -106,13 +111,11 @@ class RegistryManager:
             # Test if existing client is still valid
             try:
                 client.ping()
-                logger.debug(f"Using existing client for handler '{handler_id}'")
+                logger.trace_event("client_reused", method="get_client")
                 return client
             except Exception as e:
-                logger.warning(
-                    f"Existing client for handler '{handler_id}' is invalid ({e}). "
-                    "Creating new client."
-                )
+                logger.warning(f"Existing client invalid: {e}", method="get_client", 
+                             handler_id=handler_id)
                 # Close and remove invalid client
                 try:
                     client.close()
@@ -128,12 +131,14 @@ class RegistryManager:
             timeout_ms = int(cfg.RPC_TIMEOUT * 1000) if hasattr(cfg, 'RPC_TIMEOUT') else 30000
             new_client = ZMQClient(address, timeout=timeout_ms)
             new_client.connect()
-            logger.info(f"Created new ZMQ client for handler '{handler_id}' at {address}")
+            logger.info("Created ZMQ client", method="get_client", 
+                       handler_id=handler_id, address=address)
             with self.lock:
                 handler_info['client'] = new_client
             return new_client
         except Exception as e:
-            logger.error(f"Failed to create client for handler '{handler_id}' at {address}: {e}", exc_info=True)
+            logger.error(f"Failed to create client: {e}", method="get_client", 
+                        handler_id=handler_id, address=address, exc_info=True)
             return None
     
     async def close_all_clients(self, loop=None):
@@ -160,7 +165,7 @@ class RegistryManager:
         
         close_tasks = []
         for handler_id, client in clients_to_close:
-            logger.info(f"Closing client for {handler_id}")
+            logger.info("Closing client", method="close_all_clients", handler_id=handler_id)
             # Run close in executor as it might block
             close_tasks.append(loop.run_in_executor(None, self._safe_close_client, client))
         
@@ -173,7 +178,7 @@ class RegistryManager:
         try:
             client.close()
         except Exception as e:
-            logger.warning(f"Error closing client: {e}")
+            logger.warning(f"Error closing client: {e}", method="_safe_close_client")
 
 
 # Legacy global functions for backward compatibility

@@ -129,4 +129,4 @@ def test_handler_id():
 @pytest.fixture
 def test_output_dir():
     """Directory for test output files."""
-    return Path("test_output")
+    return Path(__file__).parent / "test_output"

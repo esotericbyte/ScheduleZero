@@ -1,10 +1,10 @@
 """Job execution and remote handler invocation for ScheduleZero."""
 
 import asyncio
-import logging
 import random
+from .logging_config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__, component="JobExecutor")
 
 
 class JobExecutor:
@@ -42,7 +42,13 @@ class JobExecutor:
         Raises:
             Exception: If all retry attempts fail
         """
-        logger.info(f"Job triggered: Call {handler_id}.{method_name} with params: {job_params}")
+        logger.info(
+            f"Job triggered: {handler_id}.{method_name}",
+            method="__call__",
+            handler=handler_id,
+            method_name=method_name
+        )
+        logger.debug(f"Job params: {job_params}", method="__call__")
         
         retries = 0
         current_delay = self.base_delay
@@ -50,15 +56,19 @@ class JobExecutor:
         
         while retries < self.max_retries:
             try:
+                logger.debug(f"Getting client for handler '{handler_id}'", method="__call__", attempt=retries+1)
                 client = self.registry_manager.get_client(handler_id)
                 if not client:
                     raise ConnectionError(f"Handler '{handler_id}' not available or connection failed")
                 
+                logger.debug(f"Calling {method_name} on handler", method="__call__", handler=handler_id)
                 # Execute RPC call in thread pool (ZMQ is synchronous)
                 result = await loop.run_in_executor(
                     None,
                     lambda: client.call(method_name, job_params)
                 )
+                
+                logger.debug(f"Received result: {result}", method="__call__")
                 
                 # Check if response indicates success
                 if isinstance(result, dict) and result.get("success") is False:
@@ -66,26 +76,37 @@ class JobExecutor:
                     raise Exception(f"Handler returned error: {error_msg}")
                 
                 logger.info(
-                    f"Job completed successfully: {handler_id}.{method_name} -> {result}"
+                    f"Job completed successfully",
+                    method="__call__",
+                    handler=handler_id,
+                    method_name=method_name,
+                    result_type=type(result).__name__
                 )
                 return result
                 
             except (TimeoutError, ConnectionError, Exception) as e:
                 retries += 1
                 logger.warning(
-                    f"Job execution failed (attempt {retries}/{self.max_retries}): "
-                    f"{handler_id}.{method_name} - Error: {e}"
+                    f"Job execution failed (attempt {retries}/{self.max_retries}): {e}",
+                    method="__call__",
+                    handler=handler_id,
+                    method_name=method_name,
+                    error=str(e)
                 )
                 
                 if retries < self.max_retries:
                     # Calculate backoff with jitter
                     jitter = random.uniform(-self.jitter_factor, self.jitter_factor) * current_delay
                     sleep_time = max(0.1, current_delay + jitter)
-                    logger.info(f"Retrying in {sleep_time:.2f} seconds...")
+                    logger.info(f"Retrying in {sleep_time:.2f}s", method="__call__", attempt=retries+1)
                     await asyncio.sleep(sleep_time)
                     current_delay *= self.backoff_factor
                 else:
                     logger.error(
-                        f"Job failed after {self.max_retries} attempts: {handler_id}.{method_name}"
+                        f"Job failed after {self.max_retries} attempts",
+                        method="__call__",
+                        handler=handler_id,
+                        method_name=method_name,
+                        exc_info=True
                     )
                     raise

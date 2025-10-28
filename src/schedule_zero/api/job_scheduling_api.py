@@ -1,13 +1,13 @@
 """Job scheduling API endpoints."""
-import logging
 import dateutil.parser
 from apscheduler import ConflictingIdError, TaskLookupError
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.date import DateTrigger
 from apscheduler.triggers.cron import CronTrigger
 from .tornado_base_handlers import BaseAPIHandler
+from ..logging_config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__, component="JobSchedulingAPI")
 
 
 class ScheduleJobHandler(BaseAPIHandler):
@@ -16,18 +16,22 @@ class ScheduleJobHandler(BaseAPIHandler):
     async def post(self):
         """Schedule a job with specified trigger."""
         # Get required fields
-        result = self.get_required_fields("handler_id", "method_name", "trigger_config", "job_params")
+        trigger = self.json_args.get("trigger")
+        if not trigger:
+            return self.send_error(400, reason="Missing required field: 'trigger'")
+        
+        result = self.get_required_fields("handler_id", "job_method", "job_params")
         if result is None:
             return  # Error already sent
         
-        handler_id, method_name, trigger_config, job_params = result
-        schedule_id = self.json_args.get("schedule_id")  # Optional
+        handler_id, job_method, job_params = result
+        job_id = self.json_args.get("job_id")  # Optional
         
         # Get dependencies
         registry_lock = self.deps.get('registry_lock')
         registry = self.deps.get('registry')
         scheduler = self.deps.get('scheduler')
-        job_executor = self.deps.get('job_executor')
+        # No longer need job_executor - use task_id instead
         
         # Validate handler and method
         with registry_lock:
@@ -36,10 +40,10 @@ class ScheduleJobHandler(BaseAPIHandler):
         if not handler_info:
             return self.send_error(404, reason=f"Handler '{handler_id}' not registered.")
         
-        if method_name not in handler_info["methods"]:
+        if job_method not in handler_info["methods"]:
             return self.send_error(
                 400,
-                reason=f"Method '{method_name}' not exposed by handler '{handler_id}'."
+                reason=f"Method '{job_method}' not exposed by handler '{handler_id}'."
             )
         
         if not self.validate_dict(job_params, "job_params"):
@@ -47,31 +51,34 @@ class ScheduleJobHandler(BaseAPIHandler):
         
         # Parse trigger
         try:
-            trigger = self._parse_trigger(trigger_config)
+            trigger_obj = self._parse_trigger(trigger)
         except ValueError as e:
             return self.send_error(400, reason=f"Invalid trigger configuration: {e}")
         except Exception as e:
-            logger.error(f"Unexpected error parsing trigger: {e}", exc_info=True)
+            logger.error(f"Unexpected error parsing trigger: {e}", method="post", 
+                        exc_info=True)
             return self.send_error(500, reason=f"Internal error parsing trigger: {e}")
         
         # Add schedule to APScheduler
         try:
             schedule_options = {
-                "id": schedule_id,
-                "args": [handler_id, method_name, job_params],
-                "replace_existing": True,
-                "misfire_grace_time": self.json_args.get("misfire_grace_time", 60)
+                "id": job_id,
+                "args": [handler_id, job_method, job_params]
             }
             
-            if schedule_id is None:
+            if job_id is None:
                 del schedule_options["id"]
             
-            schedule = await scheduler.add_schedule(job_executor, trigger=trigger, **schedule_options)
-            logger.info(f"Scheduled job via API: ID={schedule.id}, Handler={handler_id}, Method={method_name}")
-            self.write_json({"status": "success", "schedule_id": schedule.id}, 201)
+            # Use the task_id instead of passing the callable directly
+            schedule_id = await scheduler.add_schedule("job_executor", trigger=trigger_obj, **schedule_options)
+            logger.info(f"Scheduled job via API: ID={schedule_id}, Handler={handler_id}, Method={job_method}")
+            self.write_json({
+                "status": "success",
+                "job_id": schedule_id
+            }, 201)
             
         except ConflictingIdError:
-            return self.send_error(409, reason=f"Schedule ID '{schedule_id}' already exists.")
+            return self.send_error(409, reason=f"Job ID '{job_id}' already exists.")
         except TaskLookupError:
             logger.error("TaskLookupError: Job executor function not found", exc_info=True)
             return self.send_error(500, reason="Internal error: Target task function not found.")
@@ -113,11 +120,11 @@ class RunNowHandler(BaseAPIHandler):
     async def post(self):
         """Execute a job immediately without scheduling."""
         # Get required fields
-        result = self.get_required_fields("handler_id", "method_name", "job_params")
+        result = self.get_required_fields("handler_id", "job_method", "job_params")
         if result is None:
             return
         
-        handler_id, method_name, job_params = result
+        handler_id, job_method, job_params = result
         
         # Get dependencies
         registry_lock = self.deps.get('registry_lock')
@@ -131,10 +138,10 @@ class RunNowHandler(BaseAPIHandler):
         if not handler_info:
             return self.send_error(404, reason=f"Handler '{handler_id}' not registered.")
         
-        if method_name not in handler_info["methods"]:
+        if job_method not in handler_info["methods"]:
             return self.send_error(
                 400,
-                reason=f"Method '{method_name}' not exposed by handler '{handler_id}'."
+                reason=f"Method '{job_method}' not exposed by handler '{handler_id}'."
             )
         
         if not self.validate_dict(job_params, "job_params"):
@@ -142,8 +149,8 @@ class RunNowHandler(BaseAPIHandler):
         
         # Execute immediately
         try:
-            result = await job_executor(handler_id, method_name, job_params)
-            logger.info(f"Executed job immediately via API: Handler={handler_id}, Method={method_name}")
+            result = await job_executor(handler_id, job_method, job_params)
+            logger.info(f"Executed job immediately via API: Handler={handler_id}, Method={job_method}")
             self.write_json({
                 "status": "success",
                 "result": result,

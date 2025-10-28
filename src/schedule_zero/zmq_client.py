@@ -5,10 +5,8 @@ Provides simple ZMQ client wrapper for making RPC-style calls to handlers.
 No gevent, no monkey patching - just clean synchronous ZeroMQ with JSON messages.
 """
 import json
-import logging
 import zmq
-
-logger = logging.getLogger(__name__)
+from .logging_config import get_logger
 
 
 class ZMQClient:
@@ -31,6 +29,7 @@ class ZMQClient:
         self.context = zmq.Context()
         self.socket = None
         self._connected = False
+        self.logger = get_logger(__name__, component="ZMQClient", obj_id=address)
     
     def connect(self):
         """Establish connection to the remote handler."""
@@ -44,9 +43,9 @@ class ZMQClient:
             self.socket.setsockopt(zmq.LINGER, 1000)  # 1 second linger on close
             self.socket.connect(self.address)
             self._connected = True
-            logger.debug(f"Connected ZMQ client to {self.address}")
+            self.logger.debug(f"Connected to {self.address}", method="connect")
         except Exception as e:
-            logger.error(f"Failed to connect to {self.address}: {e}")
+            self.logger.error(f"Failed to connect: {e}", method="connect", exc_info=True)
             raise
     
     def call(self, method: str, params: dict = None) -> dict:
@@ -76,26 +75,26 @@ class ZMQClient:
         try:
             # Send request
             self.socket.send_string(json.dumps(request))
-            logger.debug(f"Sent request: {request}")
+            self.logger.trace_event("zmq_request_sent", method="call")
             
             # Receive response
             response_str = self.socket.recv_string()
             response = json.loads(response_str)
-            logger.debug(f"Received response: {response}")
+            self.logger.trace_event("zmq_response_received", method="call")
             
             return response
             
         except zmq.Again as e:
             # Timeout
-            logger.error(f"Request timeout after {self.timeout}ms: {method}")
+            self.logger.error(f"Request timeout after {self.timeout}ms: {method}", method="call")
             # Need to close and recreate socket after timeout in REQ/REP pattern
             self.close()
             raise TimeoutError(f"Request timeout: {method}") from e
         except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON response: {e}")
+            self.logger.error(f"Invalid JSON response: {e}", method="call", exc_info=True)
             raise
         except Exception as e:
-            logger.error(f"Error calling {method}: {e}")
+            self.logger.error(f"Error calling {method}: {e}", method="call", exc_info=True)
             raise
     
     def ping(self) -> str:
@@ -118,9 +117,9 @@ class ZMQClient:
         if self.socket:
             try:
                 self.socket.close()
-                logger.debug(f"Closed ZMQ socket to {self.address}")
+                self.logger.debug(f"Closed socket", method="close")
             except Exception as e:
-                logger.warning(f"Error closing socket: {e}")
+                self.logger.warning(f"Error closing socket: {e}", method="close")
             finally:
                 self.socket = None
                 self._connected = False
