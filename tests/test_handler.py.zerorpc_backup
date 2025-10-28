@@ -1,0 +1,501 @@
+"""
+Test handler that generates content and performs scheduled tasks.
+
+This handler is used for testing the ScheduleZero system by:
+1. Exposing methods that can be called remotely
+2. Writing results to files that tests can verify
+3. Tracking execution history
+"""
+import os
+import json
+import time
+import zerorpc
+import logging
+import signal
+import threading
+from datetime import datetime
+from pathlib import Path
+
+# --- Configuration ---
+HANDLER_ID = os.environ.get("SCHEDULEZERO_TEST_HANDLER_ID", "test-handler-001")
+HANDLER_HOST = os.environ.get("SCHEDULEZERO_HANDLER_HOST", "127.0.0.1")
+HANDLER_PORT = int(os.environ.get("SCHEDULEZERO_HANDLER_PORT", 4244))  # Different port from example
+HANDLER_ADDRESS = f"tcp://{HANDLER_HOST}:{HANDLER_PORT}"
+
+SERVER_HOST = os.environ.get("SCHEDULEZERO_SERVER_HOST", "127.0.0.1")
+SERVER_PORT = int(os.environ.get("SCHEDULEZERO_SERVER_PORT", 4242))
+SERVER_ADDRESS = f"tcp://{SERVER_HOST}:{SERVER_PORT}"
+
+REGISTRATION_RETRY_INTERVAL = 15  # Seconds
+MAX_REGISTRATION_RETRIES = int(os.environ.get("SCHEDULEZERO_MAX_RETRIES", 5))  # Max retry attempts
+
+# --- Logging Setup ---
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(HANDLER_ID)
+
+# --- Global State ---
+shutdown_event = threading.Event()
+registration_thread = None
+is_registered = False
+handler_server = None
+
+
+# --- Test Handler Service ---
+class TestHandlerService:
+    """Handler service for testing scheduled job execution."""
+    
+    def __init__(self, output_dir=None):
+        """
+        Initialize test handler with an output directory for results.
+        
+        Args:
+            output_dir: Directory where test results will be written
+        """
+        # Set up output directory
+        if output_dir is None:
+            output_dir = Path(__file__).parent / "test_output"
+        self.output_dir = Path(output_dir)
+        self.output_dir.mkdir(exist_ok=True)
+        
+        # Track execution history
+        self.execution_log = self.output_dir / "execution_log.json"
+        self._init_log()
+    
+    def _init_log(self):
+        """Initialize or load execution log."""
+        if not self.execution_log.exists():
+            self._write_log([])
+    
+    def _write_log(self, entries):
+        """Write execution log to disk."""
+        with open(self.execution_log, 'w') as f:
+            json.dump(entries, f, indent=2)
+    
+    def _append_log(self, entry):
+        """Append an entry to the execution log."""
+        entries = self._read_log()
+        entries.append(entry)
+        self._write_log(entries)
+    
+    def _read_log(self):
+        """Read execution log from disk."""
+        if not self.execution_log.exists():
+            return []
+        with open(self.execution_log, 'r') as f:
+            return json.load(f)
+    
+    
+    def write_file(self, params):
+        """
+        Write content to a file in the output directory.
+        
+        Args:
+            params: dict with 'filename' and 'content'
+            
+        Returns:
+            dict with status and file path
+        """
+        filename = params.get("filename", "default.txt")
+        content = params.get("content", "")
+        
+        file_path = self.output_dir / filename
+        
+        with open(file_path, 'w') as f:
+            f.write(content)
+        
+        # Log the execution
+        self._append_log({
+            "method": "write_file",
+            "filename": filename,
+            "content_length": len(content),
+            "timestamp": datetime.now().isoformat(),
+            "success": True
+        })
+        
+        logger.info(f"Wrote {len(content)} bytes to {filename}")
+        
+        return {
+            "status": "success",
+            "file": str(file_path),
+            "size": len(content)
+        }
+    
+    def append_to_file(self, params):
+        """
+        Append content to a file (creates if doesn't exist).
+        
+        Args:
+            params: dict with 'filename' and 'content'
+            
+        Returns:
+            dict with status and line count
+        """
+        filename = params.get("filename", "default.txt")
+        content = params.get("content", "")
+        
+        file_path = self.output_dir / filename
+        
+        with open(file_path, 'a') as f:
+            f.write(content + '\n')
+        
+        # Count lines
+        with open(file_path, 'r') as f:
+            line_count = len(f.readlines())
+        
+        # Log the execution
+        self._append_log({
+            "method": "append_to_file",
+            "filename": filename,
+            "timestamp": datetime.now().isoformat(),
+            "line_count": line_count,
+            "success": True
+        })
+        
+        logger.info(f"Appended to {filename}, now {line_count} lines")
+        
+        return {
+            "status": "success",
+            "file": str(file_path),
+            "lines": line_count
+        }
+    
+    def increment_counter(self, params):
+        """
+        Increment a named counter and return the new value.
+        
+        Args:
+            params: dict with 'counter_name' (optional)
+            
+        Returns:
+            dict with the new counter value
+        """
+        counter_name = params.get("counter_name", "default")
+        counter_file = self.output_dir / f"counter_{counter_name}.txt"
+        
+        # Read current value
+        if counter_file.exists():
+            with open(counter_file, 'r') as f:
+                current = int(f.read().strip())
+        else:
+            current = 0
+        
+        # Increment
+        new_value = current + 1
+        
+        # Write new value
+        with open(counter_file, 'w') as f:
+            f.write(str(new_value))
+        
+        # Log the execution
+        self._append_log({
+            "method": "increment_counter",
+            "counter_name": counter_name,
+            "previous_value": current,
+            "new_value": new_value,
+            "timestamp": datetime.now().isoformat(),
+            "success": True
+        })
+        
+        logger.info(f"Counter '{counter_name}' incremented to {new_value}")
+        
+        return {
+            "status": "success",
+            "counter": counter_name,
+            "value": new_value
+        }
+    
+    def generate_report(self, params):
+        """
+        Generate a timestamped report file.
+        
+        Args:
+            params: dict with 'report_name'
+            
+        Returns:
+            dict with report details
+        """
+        report_name = params.get("report_name", "default")
+        timestamp = datetime.now().isoformat()
+        report_file = self.output_dir / f"report_{report_name}_{int(time.time())}.txt"
+        
+        report_content = f"""
+=== {report_name} Report ===
+Generated: {timestamp}
+Handler: {HANDLER_ID}
+
+Execution Log Summary:
+Total executions: {len(self._read_log())}
+
+Report completed successfully.
+"""
+        
+        with open(report_file, 'w') as f:
+            f.write(report_content)
+        
+        # Log the execution
+        self._append_log({
+            "method": "generate_report",
+            "report_name": report_name,
+            "timestamp": timestamp,
+            "report_file": str(report_file),
+            "success": True
+        })
+        
+        logger.info(f"Generated report: {report_file}")
+        
+        return {
+            "status": "success",
+            "report": report_name,
+            "file": str(report_file),
+            "timestamp": timestamp
+        }
+    
+    def heartbeat(self):
+        """
+        Simple heartbeat method for testing connectivity.
+        
+        Returns:
+            dict with timestamp and handler info
+        """
+        timestamp = datetime.now().isoformat()
+        
+        # Log the execution
+        self._append_log({
+            "method": "heartbeat",
+            "timestamp": timestamp,
+            "success": True
+        })
+        
+        return {
+            "status": "alive",
+            "handler_id": HANDLER_ID,
+            "timestamp": timestamp
+        }
+    
+    def ping(self):
+        """Simple ping for health checks from the server."""
+        logger.debug("Received ping")
+        return "pong"
+    
+    def get_execution_count(self):
+        """
+        Get the total number of method executions.
+        
+        Returns:
+            dict with execution statistics
+        """
+        log = self._read_log()
+        
+        # Count by method
+        method_counts = {}
+        for entry in log:
+            method = entry.get("method", "unknown")
+            method_counts[method] = method_counts.get(method, 0) + 1
+        
+        return {
+            "total_executions": len(log),
+            "by_method": method_counts,
+            "handler_id": HANDLER_ID
+        }
+    
+    def clear_output(self):
+        """
+        Clear all output files and reset execution log.
+        
+        Returns:
+            dict with cleanup status
+        """
+        # Remove all files in output directory except execution log
+        removed_count = 0
+        for file in self.output_dir.iterdir():
+            if file.is_file() and file != self.execution_log:
+                file.unlink()
+                removed_count += 1
+        
+        # Reset execution log
+        self._write_log([])
+        
+        return {
+            "status": "success",
+            "files_removed": removed_count,
+            "log_reset": True
+        }
+
+
+# --- Registration Logic ---
+def manage_registration():
+    """Runs in a thread to register/maintain registration with the server."""
+    global is_registered
+    client = None
+    retry_count = 0
+    
+    # Methods to register
+    methods_to_register = [
+        name for name, func in TestHandlerService.__dict__.items()
+        if callable(func) and not name.startswith("_")
+    ]
+    logger.info(f"Test handler methods to register: {methods_to_register}")
+
+    while not shutdown_event.is_set() and retry_count < MAX_REGISTRATION_RETRIES:
+        if client is None:
+            try:
+                logger.info(f"Attempting to connect to server at {SERVER_ADDRESS} for registration... (attempt {retry_count + 1}/{MAX_REGISTRATION_RETRIES})")
+                client = zerorpc.Client(timeout=10, heartbeat=5)
+                client.connect(SERVER_ADDRESS)
+                client.ping(timeout=5)
+                is_registered = False
+                logger.info("Connected to server.")
+            except (zerorpc.TimeoutExpired, ConnectionRefusedError, Exception) as e:
+                retry_count += 1
+                logger.warning(f"Failed to connect or ping server for registration: {e}. Retrying in {REGISTRATION_RETRY_INTERVAL}s... (attempt {retry_count}/{MAX_REGISTRATION_RETRIES})")
+                if client:
+                    try:
+                        client.close()
+                    except Exception:
+                        pass
+                client = None
+                if retry_count >= MAX_REGISTRATION_RETRIES:
+                    logger.error(f"Max retries ({MAX_REGISTRATION_RETRIES}) reached. Giving up.")
+                    return
+                shutdown_event.wait(REGISTRATION_RETRY_INTERVAL)
+                continue
+
+        if not is_registered and client:
+            try:
+                logger.info(f"Attempting to register as '{HANDLER_ID}' at {HANDLER_ADDRESS}...")
+                response = client.register(HANDLER_ID, HANDLER_ADDRESS, methods_to_register)
+                if response and response.get("success"):
+                    is_registered = True
+                    retry_count = 0  # Reset counter on success
+                    logger.info(f"Registration successful: {response.get('message', 'OK')}")
+                else:
+                    logger.warning("Registration reported failed by server. Retrying connection...")
+                    try:
+                        client.close()
+                    except Exception:
+                        pass
+                    client = None
+                    shutdown_event.wait(REGISTRATION_RETRY_INTERVAL)
+            except (zerorpc.TimeoutExpired, zerorpc.LostRemote, Exception) as e:
+                logger.warning(f"Registration attempt failed: {e}. Will retry connection.")
+                is_registered = False
+                if client:
+                    try:
+                        client.close()
+                    except Exception:
+                        pass
+                client = None
+                shutdown_event.wait(REGISTRATION_RETRY_INTERVAL)
+                continue
+
+        if is_registered and client:
+            wait_interval = REGISTRATION_RETRY_INTERVAL * 2
+            logger.debug(f"Registered. Checking connection in {wait_interval}s...")
+            shutdown_signaled = shutdown_event.wait(wait_interval)
+            if shutdown_signaled:
+                break
+
+            if not shutdown_event.is_set() and client:
+                try:
+                    logger.debug("Pinging server for health check...")
+                    client.ping(timeout=5)
+                    logger.debug("Server ping successful.")
+                except (zerorpc.TimeoutExpired, zerorpc.LostRemote, Exception) as e:
+                    logger.warning(f"Server connection lost or ping failed: {e}. Will attempt to re-register.")
+                    is_registered = False
+                    if client:
+                        try:
+                            client.close()
+                        except Exception:
+                            pass
+                    client = None
+
+    # Shutdown sequence
+    logger.info("Registration thread stopping...")
+    if is_registered and client:
+        try:
+            logger.info("Attempting to report 'offline' status to server...")
+            client.report_status(HANDLER_ID, 'offline', timeout=5)
+            logger.info("Successfully reported 'offline' status.")
+        except (zerorpc.TimeoutExpired, zerorpc.LostRemote, Exception) as e:
+            logger.warning(f"Could not report offline status during shutdown: {e}")
+    if client:
+        try:
+            client.close()
+            logger.info("Registration client connection closed.")
+        except Exception as e:
+            logger.warning(f"Error closing registration client connection: {e}")
+    logger.info("Registration thread finished.")
+
+
+# --- Signal Handling ---
+def handle_signal(signum, frame):
+    if not shutdown_event.is_set():
+        logger.info(f"Received signal {signum}. Initiating graceful shutdown...")
+        shutdown_event.set()
+
+
+# --- Main Execution ---
+def main():
+    """Run the test handler as a standalone process."""
+    global handler_server, registration_thread
+    import sys
+    
+    # Setup signal handlers
+    signal.signal(signal.SIGINT, handle_signal)
+    signal.signal(signal.SIGTERM, handle_signal)
+
+    logger.info(f"Starting registration thread for handler '{HANDLER_ID}'...")
+    registration_thread = threading.Thread(target=manage_registration, daemon=True)
+    registration_thread.start()
+
+    logger.info(f"Starting zerorpc test handler server on {HANDLER_ADDRESS}...")
+    handler_server = zerorpc.Server(TestHandlerService())
+    try:
+        handler_server.bind(HANDLER_ADDRESS)
+    except Exception as e:
+        logger.critical(f"Failed to bind handler server to {HANDLER_ADDRESS}: {e}", exc_info=True)
+        shutdown_event.set()
+        if registration_thread and registration_thread.is_alive():
+            registration_thread.join(timeout=5)
+        sys.exit(1)
+
+    # Run the server loop
+    try:
+        logger.info(f"Test handler server running. Press Ctrl+C to stop.")
+        while not shutdown_event.is_set():
+            try:
+                gevent_core = zerorpc.core.get_hub().get_loop()
+                gevent_core.run(timeout=1)
+            except AttributeError:
+                logger.debug("Gevent loop not directly accessible, using simple wait.")
+                shutdown_event.wait(1.0)
+            except Exception as loop_e:
+                logger.error(f"Error in handler server loop: {loop_e}")
+                if not shutdown_event.is_set():
+                    time.sleep(1)
+    except Exception as e:
+        logger.error(f"Unhandled exception in server run: {e}", exc_info=True)
+    finally:
+        logger.info("Handler server loop finished or interrupted.")
+        shutdown_event.set()
+
+        if handler_server:
+            try:
+                handler_server.close()
+                logger.info("Handler server closed.")
+            except Exception as e:
+                logger.error(f"Error closing handler server: {e}", exc_info=True)
+
+        logger.info("Waiting for registration thread to finish...")
+        if registration_thread and registration_thread.is_alive():
+            registration_thread.join(timeout=10)
+            if registration_thread.is_alive():
+                logger.warning("Registration thread did not exit cleanly.")
+
+        logger.info(f"Test handler '{HANDLER_ID}' shut down.")
+        sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

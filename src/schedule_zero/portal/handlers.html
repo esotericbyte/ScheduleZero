@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Handlers - ScheduleZero</title>
+    <link rel="stylesheet" href="/static/main.css">
+</head>
+<body data-theme="light">
+    <div class="container">
+        <h1>📡 Registered Handlers</h1>
+        <p class="subtitle">All handlers connected to the ScheduleZero server</p>
+        <div class="count" id="count">Loading...</div>
+        
+        <div id="content">
+            <div class="loading">Loading handlers...</div>
+        </div>
+        
+        <a href="/" class="back-link">← Back to Dashboard</a>
+    </div>
+    
+    <script>
+        // Apply saved theme
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.body.setAttribute('data-theme', savedTheme);
+        
+        async function loadHandlers() {
+            const countEl = document.getElementById('count');
+            const contentEl = document.getElementById('content');
+            
+            try {
+                const response = await fetch('/api/handlers');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                const handlers = data.handlers || [];
+                
+                countEl.textContent = `Total: ${handlers.length} handler(s)`;
+                
+                if (handlers.length === 0) {
+                    contentEl.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🔌</div>
+                            <p>No handlers registered yet</p>
+                        </div>
+                    `;
+                } else {
+                    let rows = '';
+                    handlers.forEach(handler => {
+                        const statusClass = handler.status === 'Connected' ? 'connected' : 'disconnected';
+                        const methods = handler.methods && handler.methods.length > 0 
+                            ? handler.methods.join(', ') 
+                            : 'None';
+                        
+                        rows += `
+                            <tr>
+                                <td><code>${handler.id}</code></td>
+                                <td><code>${handler.address}</code></td>
+                                <td><span class="status-badge ${statusClass}">${handler.status}</span></td>
+                                <td><code>${methods}</code></td>
+                            </tr>
+                        `;
+                    });
+                    
+                    contentEl.innerHTML = `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Handler ID</th>
+                                    <th>Address</th>
+                                    <th>Status</th>
+                                    <th>Methods</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows}
+                            </tbody>
+                        </table>
+                    `;
+                }
+            } catch (error) {
+                contentEl.innerHTML = `
+                    <div class="error">
+                        Error loading handlers: ${error.message}
+                    </div>
+                `;
+                countEl.textContent = 'Error';
+            }
+        }
+        
+        // Load on page load
+        loadHandlers();
+        
+        // Refresh every 25 seconds
+        setInterval(loadHandlers, 25000);
+    </script>
+</body>
+</html>

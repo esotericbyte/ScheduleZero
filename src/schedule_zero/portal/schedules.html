@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedules - ScheduleZero</title>
+    <link rel="stylesheet" href="/static/main.css">
+</head>
+<body data-theme="light">
+    <div class="container">
+        <h1>📅 Active Schedules</h1>
+        <p class="subtitle">All scheduled jobs in the system</p>
+        <div class="count" id="count">Loading...</div>
+        
+        <div id="content">
+            <div class="loading">Loading schedules...</div>
+        </div>
+        
+        <a href="/" class="back-link">← Back to Dashboard</a>
+    </div>
+    
+    <script>
+        // Apply saved theme
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.body.setAttribute('data-theme', savedTheme);
+        
+        async function loadSchedules() {
+            const countEl = document.getElementById('count');
+            const contentEl = document.getElementById('content');
+            
+            try {
+                const response = await fetch('/api/schedules');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                const schedules = data.schedules || [];
+                
+                countEl.textContent = `Total: ${schedules.length} schedule(s)`;
+                
+                if (schedules.length === 0) {
+                    contentEl.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📅</div>
+                            <p>No schedules configured yet</p>
+                        </div>
+                    `;
+                } else {
+                    let rows = '';
+                    schedules.forEach(schedule => {
+                        const nextRun = schedule.next_run_time || 'N/A';
+                        const trigger = schedule.trigger || 'N/A';
+                        
+                        rows += `
+                            <tr>
+                                <td><code>${schedule.id}</code></td>
+                                <td><code>${schedule.task_id || 'N/A'}</code></td>
+                                <td><code>${trigger}</code></td>
+                                <td><code>${nextRun}</code></td>
+                            </tr>
+                        `;
+                    });
+                    
+                    contentEl.innerHTML = `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Schedule ID</th>
+                                    <th>Task</th>
+                                    <th>Trigger</th>
+                                    <th>Next Run</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows}
+                            </tbody>
+                        </table>
+                    `;
+                }
+            } catch (error) {
+                contentEl.innerHTML = `
+                    <div class="error">
+                        Error loading schedules: ${error.message}
+                    </div>
+                `;
+                countEl.textContent = 'Error';
+            }
+        }
+        
+        // Load on page load
+        loadSchedules();
+        
+        // Refresh every 25 seconds
+        setInterval(loadSchedules, 25000);
+    </script>
+</body>
+</html>

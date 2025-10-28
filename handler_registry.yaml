@@ -1,0 +1,14 @@
+test-handler-001:
+  address: tcp://127.0.0.1:4244
+  last_updated: '2025-10-27T18:50:30.411691'
+  methods:
+  - append_to_file
+  - clear_output
+  - generate_report
+  - get_execution_count
+  - heartbeat
+  - increment_counter
+  - write_file
+  - ping
+  registered_at: '2025-10-27T18:50:30.411691'
+  status: unknown
