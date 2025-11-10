@@ -2,6 +2,7 @@
 ScheduleZero Main Server
 
 Simplified main server file that orchestrates all components.
+Supports multiple simultaneous deployments with separate configs.
 """
 import asyncio
 import os
@@ -15,15 +16,14 @@ from apscheduler.datastores.sqlalchemy import SQLAlchemyDataStore
 from apscheduler.executors.async_ import AsyncJobExecutor
 
 from .logging_config import setup_logging, get_logger
+from .deployment_config import get_deployment_config, print_deployment_info
 from .app_configuration import (
     load_config,
-    get_database_url,
-    TORNADO_ADDRESS,
-    TORNADO_PORT,
     README_FILE_PATH
 )
 from .handler_registry import RegistryManager
 from .job_executor import JobExecutor
+from .job_execution_log import JobExecutionLog
 from .zmq_registration_server import ZMQRegistrationServer
 from .api import (
     IndexHandler,
@@ -33,13 +33,27 @@ from .api import (
     ScheduleJobHandler,
     RunNowHandler,
     ListSchedulesHandler,
+    RemoveScheduleHandler,
     ConfigHandler,
     HandlersViewHandler,
-    SchedulesViewHandler
+    SchedulesViewHandler,
+    JobExecutionHistoryHandler,
+    JobExecutionStatsHandler,
+    JobExecutionErrorsHandler,
+    JobExecutionClearHandler,
+    DocsHandler,
+    DocsIndexHandler
 )
 
-# Initialize logging
-setup_logging(level=os.environ.get("LOG_LEVEL", "INFO"), format_style="detailed")
+# Get deployment configuration
+DEPLOYMENT = get_deployment_config()
+
+# Initialize logging with deployment-specific settings
+setup_logging(
+    level=DEPLOYMENT.log_level,
+    log_file=DEPLOYMENT.log_file,
+    format_style="detailed"
+)
 logger = get_logger(__name__, component="TornadoServer")
 
 
@@ -71,9 +85,10 @@ scheduler: AsyncScheduler | None = None
 rpc_server: ZMQRegistrationServer | None = None
 registry_manager: RegistryManager | None = None
 job_executor: JobExecutor | None = None
+execution_log: JobExecutionLog | None = None
 
 
-def make_tornado_app(config, registry_manager, scheduler, job_executor):
+def make_tornado_app(config, registry_manager, scheduler, job_executor, execution_log):
     """
     Create and configure the Tornado application.
     
@@ -82,6 +97,7 @@ def make_tornado_app(config, registry_manager, scheduler, job_executor):
         registry_manager: RegistryManager instance
         scheduler: APScheduler AsyncScheduler instance
         job_executor: JobExecutor callable for running jobs
+        execution_log: JobExecutionLog instance for tracking executions
     
     Returns:
         Configured Tornado application
@@ -98,10 +114,17 @@ def make_tornado_app(config, registry_manager, scheduler, job_executor):
         'job_executor': job_executor
     }
     
+    # Dependencies for execution log API handlers
+    execution_log_deps = {
+        'execution_log': execution_log
+    }
+    
+    # Get docs path (built mkdocs site)
+    docs_build_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'docs_site_build')
+    
     routes = [
         # Main UI
         (r"/", IndexHandler, {'config': config, 'template_path': portal_path}),
-        (r"/readme", ReadmeHandler, {'readme_path': README_FILE_PATH}),
         
         # Web Views (HTML pages that consume JSON APIs)
         (r"/view/handlers", HandlersViewHandler),
@@ -109,26 +132,41 @@ def make_tornado_app(config, registry_manager, scheduler, job_executor):
         
         # API endpoints (JSON only)
         (r"/api/health", HealthCheckHandler),
+        (r"/api/readme", ReadmeHandler, {'readme_path': README_FILE_PATH}),
         (r"/api/handlers", ListHandlersHandler, api_deps),
         (r"/api/schedule", ScheduleJobHandler, api_deps),
         (r"/api/run_now", RunNowHandler, api_deps),
         (r"/api/schedules", ListSchedulesHandler, api_deps),
+        (r"/api/schedules/([^/]+)", RemoveScheduleHandler, api_deps),  # DELETE /api/schedules/{schedule_id}
         (r"/api/config", ConfigHandler, api_deps),
+        
+        # Job Execution Logging API endpoints
+        (r"/api/executions", JobExecutionHistoryHandler, execution_log_deps),
+        (r"/api/executions/stats", JobExecutionStatsHandler, execution_log_deps),
+        (r"/api/executions/errors", JobExecutionErrorsHandler, execution_log_deps),
+        (r"/api/executions/clear", JobExecutionClearHandler, execution_log_deps),
+        
+        # Documentation (built mkdocs site)
+        (r"/docs$", DocsIndexHandler),  # Redirect /docs to /docs/
+        (r"/docs/(.*)", DocsHandler, {'docs_path': docs_build_path}),
     ]
     
     return tornado.web.Application(
         routes,
         template_path=portal_path,
         static_path=os.path.join(portal_path, 'static'),
-        debug=False,  # Set to True for development
-        serve_traceback=False,  # Set to True to see full tracebacks in API responses
+        debug=True,  # Set to True for development - disables template caching
+        serve_traceback=True,  # Set to True to see full tracebacks in API responses
         log_function=log_function  # Custom logging to suppress polling endpoint spam
     )
 
 
 async def start_server():
     """Initialize and start all server components."""
-    global scheduler, rpc_server, registry_manager, job_executor
+    global scheduler, rpc_server, registry_manager, job_executor, execution_log
+    
+    # Print deployment info
+    print_deployment_info(DEPLOYMENT)
     
     logger.info("Starting ScheduleZero Server", method="start_server")
     
@@ -139,8 +177,12 @@ async def start_server():
     registry_manager = RegistryManager()
     registry_manager.load()
     
-    # Initialize database and scheduler
-    db_url = os.environ.get("SCHEDULEZERO_DATABASE_URL", get_database_url())
+    # Initialize execution log (circular buffer for job execution history)
+    execution_log = JobExecutionLog(max_size=1000)
+    logger.info("Initialized execution log (max 1000 records)", method="start_server")
+    
+    # Initialize database and scheduler using deployment config
+    db_url = os.environ.get("SCHEDULEZERO_DATABASE_URL", DEPLOYMENT.database_url)
     logger.info(f"Using database: {db_url}", method="start_server")
     
     try:
@@ -160,13 +202,12 @@ async def start_server():
         job_executors=job_executors
     )
     
-    # Initialize job executor
-    job_executor = JobExecutor(registry_manager)
+    # Initialize job executor with execution logging
+    job_executor = JobExecutor(registry_manager, execution_log=execution_log)
     
-    # Start ZMQ registration server
+    # Start ZMQ registration server with deployment-specific address
     rpc_server = ZMQRegistrationServer(
-        address=f"tcp://{os.environ.get('SCHEDULEZERO_ZRPC_HOST', '127.0.0.1')}:"
-                f"{os.environ.get('SCHEDULEZERO_ZRPC_PORT', '4242')}",
+        address=DEPLOYMENT.zmq_address,
         registry=registry_manager.registry,
         registry_lock=registry_manager.lock,
         registry_path=registry_manager.registry_path,
@@ -183,7 +224,7 @@ async def start_server():
         return
     
     # Start APScheduler with persistent data store using async context manager
-    # The context manager starts both the data store and scheduler
+    # The context manager initializes the data store and makes scheduler methods available
     async with scheduler:
         # IMPORTANT: Register the job_executor as a task in APScheduler AFTER scheduler starts
         # This allows APScheduler to serialize/reference it properly and persist to the database
@@ -197,10 +238,10 @@ async def start_server():
         
         # Start Tornado web server
         try:
-            app = make_tornado_app(config, registry_manager, scheduler, job_executor)
-            app.listen(TORNADO_PORT, address=TORNADO_ADDRESS)
+            app = make_tornado_app(config, registry_manager, scheduler, job_executor, execution_log)
+            app.listen(DEPLOYMENT.tornado_port, address=DEPLOYMENT.tornado_host)
             logger.info("Tornado server ready", method="start_server",
-                       address=TORNADO_ADDRESS, port=TORNADO_PORT)
+                       address=DEPLOYMENT.tornado_host, port=DEPLOYMENT.tornado_port)
         except Exception as e:
             logger.critical(f"Failed to start Tornado: {e}", method="start_server", exc_info=True)
             return

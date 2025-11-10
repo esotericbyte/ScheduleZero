@@ -7,7 +7,7 @@ authors = [
 ]
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = ["tornado (>=6.5.2,<7.0.0)", "sqlalchemy (>=2.0.44,<3.0.0)", "pyzmq (>=27.1.0,<28.0.0)", "pyyaml (>=6.0.3,<7.0.0)", "python-dateutil (>=2.9.0.post0,<3.0.0)", "apscheduler (==4.0.0a5)", "aiosqlite (>=0.21.0,<0.22.0)"]
+dependencies = ["tornado (>=6.5.2,<7.0.0)", "sqlalchemy (>=2.0.44,<3.0.0)", "pyzmq (>=27.1.0,<28.0.0)", "pyyaml (>=6.0.3,<7.0.0)", "python-dateutil (>=2.9.0.post0,<3.0.0)", "apscheduler (==4.0.0a5)", "aiosqlite (>=0.21.0,<0.22.0)", "pyttsx3 (>=2.99,<3.0)"]
 
 [tool.poetry]
 packages = [{include = "schedule_zero", from = "src"}]
@@ -15,7 +15,32 @@ packages = [{include = "schedule_zero", from = "src"}]
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.2"
 requests = "^2.32.5"
+mkdocs = "^1.6.1"
+mkdocs-material = "^9.6.23"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+# Pytest configuration for ScheduleZero test suite
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Markers for organizing tests
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+    "regression: marks tests as regression tests",
+    "zmq: marks tests that require ZMQ",
+    "governor: marks tests for governor functionality",
+]
+
+# Logging
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)s] %(message)s"
+log_cli_date_format = "%H:%M:%S"

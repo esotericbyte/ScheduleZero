@@ -1,0 +1,54 @@
+# Discord Bot Scheduled Jobs Configuration
+
+# This file defines scheduled jobs for the Discord bot
+# Jobs are loaded by the DiscordScheduleHandler
+
+# Daily announcement example
+daily_announcement:
+  schedule: "0 12 * * *"  # Every day at noon UTC
+  job:
+    method: "send_message"
+    params:
+      channel_id: 123456789012345678
+      content: "Good afternoon everyone! Daily reminder message."
+
+# Weekly cleanup
+weekly_cleanup:
+  schedule: "0 0 * * 0"  # Every Sunday at midnight
+  job:
+    method: "cleanup_old_messages"
+    params:
+      channel_id: 123456789012345678
+      limit: 500
+      age_days: 30
+
+# Status rotation (every hour)
+hourly_status:
+  schedule: "0 * * * *"  # Every hour
+  job:
+    method: "update_status"
+    params:
+      activity_type: "playing"
+      name: "with scheduled tasks!"
+
+# Event reminder (specific time)
+event_reminder:
+  schedule: "0 18 * * 5"  # Every Friday at 6 PM UTC
+  job:
+    method: "send_embed"
+    params:
+      channel_id: 123456789012345678
+      title: "Weekend Event Reminder"
+      description: "Don't forget about our weekend gaming session!"
+      color: 0x00ff00
+
+# Role assignment example
+monthly_role_update:
+  schedule: "0 0 1 * *"  # First day of each month
+  job:
+    method: "update_role"
+    params:
+      guild_id: 123456789012345678
+      user_id: 987654321098765432
+      role_id: 111111111111111111
+      action: "add"

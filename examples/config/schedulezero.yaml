@@ -1,0 +1,18 @@
+# ScheduleZero Configuration for Discord Bot
+# Place this file at: config/schedulezero.yaml
+
+# Handler identification
+handler_id: "my-discord-bot"
+
+# Handler port (must be unique per bot if running multiple)
+handler_port: 5000
+
+# ScheduleZero server address
+# Use deployment-specific ports if needed:
+#   - default: tcp://127.0.0.1:4242
+#   - production: tcp://127.0.0.1:4243
+#   - clock: tcp://127.0.0.1:4244
+server_address: "tcp://127.0.0.1:4242"
+
+# Optional: API endpoint for job scheduling from Discord
+api_endpoint: "http://localhost:8888"

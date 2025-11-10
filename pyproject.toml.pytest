@@ -1,0 +1,43 @@
+[tool.pytest.ini_options]
+# Pytest configuration for ScheduleZero test suite
+
+# Test discovery
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Output options
+addopts = [
+    "-v",                    # Verbose output
+    "--tb=short",            # Shorter tracebacks
+    "--strict-markers",      # Strict marker checking
+    "-ra",                   # Show summary of all test results
+    "--color=yes",           # Colored output
+]
+
+# Markers for organizing tests
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+    "regression: marks tests as regression tests",
+    "zmq: marks tests that require ZMQ",
+    "governor: marks tests for governor functionality",
+]
+
+# Logging
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)s] %(message)s"
+log_cli_date_format = "%H:%M:%S"
+
+# Coverage (if pytest-cov is installed)
+# Uncomment to enable coverage reporting
+# addopts = --cov=src/schedule_zero --cov-report=html --cov-report=term
+
+# Timeout for tests (requires pytest-timeout)
+# timeout = 300  # 5 minutes max per test
+
+# Parallel execution (requires pytest-xdist)
+# addopts = -n auto  # Use all CPU cores

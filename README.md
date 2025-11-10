@@ -26,10 +26,11 @@
 - 🪶 **Lightweight**: No message broker required (RabbitMQ/Redis)
 - 🚀 **Fast**: Built on modern async Python (asyncio, Tornado)
 - 🔄 **Distributed**: Scale horizontally with worker handlers
-- 💾 **Persistent**: SQLite-based job storage
-- 🎨 **Beautiful UI**: Modern web interface for monitoring
-- 🔌 **Brokerless**: Direct RPC communication via zerorpc
-- 🛡️ **Reliable**: Built-in retry logic with exponential backoff
+- 💾 **Persistent**: SQLite-based job storage with file logging
+- 🎨 **Beautiful UI**: TUI-inspired web control panel
+- 🔌 **Brokerless**: Direct ZMQ communication (no RabbitMQ/Redis)
+- � **Rich Logging**: Full context (file:line:function) in every log
+- 🎯 **Governor Process**: Single command to manage all components
 
 ---
 
@@ -78,29 +79,36 @@ admin_contact: "admin@example.com"
 version: "1.0.0"
 ```
 
-### Running
+### Running with Governor (Recommended)
 
-**Terminal 1 - Start the Server:**
+**Start the entire system:**
 ```bash
-poetry run schedule-zero-server
-# Server starts on http://127.0.0.1:8888
+poetry run python governor.py start
+# Starts server + handlers as supervised subprocesses
+# All output goes to logs/ directory
+# Web UI: http://127.0.0.1:8889 (clock deployment)
 ```
 
-**Terminal 2 - Start a Handler:**
+**Stop the system:**
 ```bash
-poetry run schedule-zero-handler
-# Handler auto-registers and starts listening
+poetry run python governor.py stop
 ```
 
-**Terminal 3 - Test the System:**
+**Check status:**
 ```bash
-poetry run python test_schedule.py
-# Runs end-to-end tests
+poetry run python governor.py status
 ```
+
+**Key Features:**
+- ✅ Single command to start/stop everything
+- ✅ All output goes to structured log files
+- ✅ Automatic process supervision and restart on crash
+- ✅ No terminal juggling required
+- ✅ Full context logging (file:line:function in every log)
 
 ### Access the Dashboard
 
-Open your browser to **http://localhost:8888**
+Open your browser to **http://localhost:8889** (clock deployment) or **http://localhost:8888** (default deployment)
 
 ---
 
@@ -113,9 +121,9 @@ Open your browser to **http://localhost:8888**
 │               ScheduleZero Central Server               │
 │                                                           │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Tornado    │  │  APScheduler │  │   zerorpc    │  │
+│  │   Tornado    │  │  APScheduler │  │     ZMQ      │  │
 │  │  Web Server  │──│   4.x Async  │──│Registration  │  │
-│  │   :8888      │  │   Scheduler  │  │Server :4242  │  │
+│  │   :8889      │  │   Scheduler  │  │Server :4243  │  │
 │  └──────────────┘  └──────────────┘  └──────────────┘  │
 │         │                  │                  │          │
 │         │                  │                  │          │
@@ -125,18 +133,21 @@ Open your browser to **http://localhost:8888**
 │    └──────────┘      └───────────┘     └───────────┘  │
 └─────────────────────────────────────────────────────────┘
                           │
-                          │  zerorpc (tcp)
+                          │  ZMQ REQ/REP (tcp)
                           │
         ┌─────────────────┴─────────────────┐
         │                                   │
         ▼                                   ▼
 ┌───────────────┐                   ┌───────────────┐
 │   Handler 1   │                   │   Handler 2   │
-│   :4243       │                   │   :4244       │
+│   :4245       │                   │   :4246       │
 │               │                   │               │
 │  • do_work()  │                   │  • process()  │
 │  • backup()   │                   │  • analyze()  │
 └───────────────┘                   └───────────────┘
+        │                                   │
+        ├─ logs/handlers/handler1/          │
+        └─ Full context logging             └─ logs/handlers/handler2/
 ```
 
 ### Technology Stack
@@ -145,11 +156,12 @@ Open your browser to **http://localhost:8888**
 |-----------|-----------|---------|
 | **Web Framework** | Tornado 6.5+ | Async web server & HTTP API |
 | **Scheduler** | APScheduler 4.x | Job scheduling & execution |
-| **RPC Layer** | zerorpc | Lightweight, brokerless communication |
+| **RPC Layer** | ZeroMQ (pyzmq) | Direct, brokerless communication |
 | **Persistence** | SQLite + SQLAlchemy | Job storage & retrieval |
-| **Transport** | ZeroMQ | High-performance messaging |
-| **Serialization** | MessagePack | Efficient data encoding |
+| **Logging** | File-based | Structured logs with full context |
+| **Serialization** | JSON | Simple, debuggable data encoding |
 | **Configuration** | PyYAML | Human-readable config files |
+| **Process Management** | Governor | Supervisor for server & handlers |
 
 ### Why These Choices?
 
@@ -163,11 +175,11 @@ Open your browser to **http://localhost:8888**
 - Flexible trigger types (date, interval, cron)
 - Persistent job storage with datastore abstraction
 
-#### 🔌 **zerorpc**
+#### 🔌 **ZeroMQ**
 - No message broker required (unlike Celery)
+- Direct socket communication (REQ/REP pattern)
 - Minimal memory footprint
-- Built-in heartbeat and timeout handling
-- Automatic serialization with MessagePack
+- Built-in connection management
 
 #### 💾 **SQLite**
 - Zero configuration database
@@ -184,24 +196,39 @@ Open your browser to **http://localhost:8888**
 ```
 src/schedule_zero/
 ├── app_configuration.py          # App config & environment vars
-├── handler_registry.py            # Handler registration & clients
-├── job_executor.py                # Job execution with retries
-├── zerorpc_registration_server.py # RPC server for registration
+├── deployment_config.py           # Multi-deployment support
+├── handler_registry.py            # Handler registration & ZMQ clients
+├── job_executor.py                # Job execution logic
+├── logging_config.py              # Rich logging with full context
+├── zmq_handler_base.py            # Base class for ZMQ handlers
+├── zmq_registration_server.py     # ZMQ registration server
 ├── tornado_app_server.py          # Main server orchestration
-├── server.py                      # CLI entry point
 ├── api/
 │   ├── tornado_base_handlers.py   # Base Tornado handlers
 │   ├── handler_list_api.py        # Handler endpoints
 │   ├── job_scheduling_api.py      # Job scheduling endpoints
 │   └── config_api.py              # Configuration endpoint
+├── portal/
+│   ├── index.html                 # TUI-inspired control panel
+│   └── static/                    # CSS/JS assets
 └── handlers/
-    ├── base.py                    # Abstract handler base class
-    └── example.py                 # Example handler implementation
+    └── [deprecated - use zmq_handler_base.py]
+
+logs/
+├── [deployment]/
+│   ├── server/                    # Server logs
+│   ├── handlers/                  # Handler-specific logs
+│   │   └── [handler-id]/
+│   │       ├── handler.log        # Handler lifecycle
+│   │       └── errors.log         # Errors only
+│   └── governor/                  # Governor logs
 ```
 
 **Documentation Files:**
-- [`REFACTORING_SUMMARY.md`](REFACTORING_SUMMARY.md) - Detailed refactoring notes
-- [`TESTING_STATUS.md`](TESTING_STATUS.md) - Current testing status & known issues
+- [`DEPLOYMENT_GUIDE.md`](DEPLOYMENT_GUIDE.md) - Multi-deployment setup
+- [`TESTING_STATUS.md`](TESTING_STATUS.md) - Testing status & known issues
+- [`docs/EXECUTION_LOGGING_API.md`](docs/EXECUTION_LOGGING_API.md) - Job logging API
+- [`examples/DISCORD_INTEGRATION.md`](examples/DISCORD_INTEGRATION.md) - Discord bot examples
 
 ---
 
@@ -311,13 +338,22 @@ GET /api/health
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `SCHEDULEZERO_TORNADO_ADDR` | `127.0.0.1` | Tornado bind address |
-| `SCHEDULEZERO_TORNADO_PORT` | `8888` | Tornado HTTP port |
-| `SCHEDULEZERO_ZRPC_HOST` | `127.0.0.1` | zerorpc server host |
-| `SCHEDULEZERO_ZRPC_PORT` | `4242` | zerorpc server port |
-| `SCHEDULEZERO_DATABASE_URL` | `sqlite:///schedulezero_jobs.db` | Database connection |
+| `SCHEDULEZERO_DEPLOYMENT` | `default` | Deployment name (default/clock/production/test) |
 | `SCHEDULEZERO_CONFIG_PATH` | `config.yaml` | Config file path |
-| `SCHEDULEZERO_REGISTRY_PATH` | `handler_registry.yaml` | Registry file path |
+| `SCHEDULEZERO_LOG_LEVEL` | `INFO` | Logging level (DEBUG/INFO/WARNING/ERROR) |
+
+### Deployments
+
+ScheduleZero supports multiple simultaneous deployments with separate configs:
+
+| Deployment | Web Port | ZMQ Port | Purpose |
+|------------|----------|----------|---------|
+| `default` | 8888 | 4242 | Development |
+| `clock` | 8889 | 4243 | Time announcements (DingDong handler) |
+| `production` | 8890 | 4244 | Production workloads |
+| `test` | 8891 | 4245 | Testing |
+
+Set deployment with: `export SCHEDULEZERO_DEPLOYMENT=clock`
 
 ### Trigger Types
 
@@ -394,9 +430,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 Built with these excellent libraries:
 - [Tornado](https://www.tornadoweb.org/) - Async web framework
 - [APScheduler](https://apscheduler.readthedocs.io/) - Job scheduling
-- [zerorpc](http://www.zerorpc.io/) - RPC framework
-- [ZeroMQ](https://zeromq.org/) - Messaging library
+- [ZeroMQ (pyzmq)](https://zeromq.org/) - High-performance messaging
 - [SQLAlchemy](https://www.sqlalchemy.org/) - Database toolkit
+- [PyYAML](https://pyyaml.org/) - YAML parser
 
 ---
 

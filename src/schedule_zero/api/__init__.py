@@ -15,11 +15,16 @@ from .job_scheduling_api import (
     RunNowHandler,
     ListSchedulesHandler
 )
+from .remove_schedule_api import RemoveScheduleHandler
 from .config_api import ConfigHandler
-from .web_views import (
-    HandlersViewHandler,
-    SchedulesViewHandler
+from .web_views import HandlersViewHandler, SchedulesViewHandler
+from .job_execution_log_api import (
+    JobExecutionHistoryHandler,
+    JobExecutionStatsHandler,
+    JobExecutionErrorsHandler,
+    JobExecutionClearHandler
 )
+from .docs_handler import DocsHandler, DocsIndexHandler
 
 __all__ = [
     'BaseAPIHandler',
@@ -33,4 +38,10 @@ __all__ = [
     'ConfigHandler',
     'HandlersViewHandler',
     'SchedulesViewHandler',
+    'JobExecutionHistoryHandler',
+    'JobExecutionStatsHandler',
+    'JobExecutionErrorsHandler',
+    'JobExecutionClearHandler',
+    'DocsHandler',
+    'DocsIndexHandler',
 ]

@@ -126,6 +126,44 @@ class TestHandler(ZMQHandlerBase):
             "size": len(content)
         }
     
+    def write_timestamp(self, params):
+        """
+        Write current execution timestamp to a file.
+        This captures the ACTUAL execution time, not a parameter.
+        
+        Args:
+            params: dict with 'filename'
+            
+        Returns:
+            dict with status and timestamp
+        """
+        filename = params.get("filename", "timestamp.txt")
+        
+        # Capture the ACTUAL execution time right now
+        execution_time = datetime.now()
+        content = f"EXECUTION_TIME: {execution_time.strftime('%Y-%m-%d %H:%M:%S')}"
+        
+        file_path = self.output_dir / filename
+        
+        with open(file_path, 'w') as f:
+            f.write(content)
+        
+        # Log the execution
+        self._append_log({
+            "method": "write_timestamp",
+            "filename": filename,
+            "timestamp": execution_time.isoformat(),
+            "success": True
+        })
+        
+        logger.info(f"Wrote execution timestamp to {filename}: {execution_time}")
+        
+        return {
+            "status": "success",
+            "file": str(file_path),
+            "timestamp": execution_time.isoformat()
+        }
+    
     def append_to_file(self, params):
         """
         Append content to a file (creates if doesn't exist).
