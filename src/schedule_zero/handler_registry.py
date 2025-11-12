@@ -116,9 +116,9 @@ class RegistryManager:
             except Exception as e:
                 logger.warning(f"Existing client invalid: {e}", method="get_client", 
                              handler_id=handler_id)
-                # Close and remove invalid client
+                # Close and remove invalid client (terminate to cleanup context)
                 try:
-                    client.close()
+                    client.terminate()
                 except Exception:
                     pass
                 with self.lock:
@@ -174,9 +174,9 @@ class RegistryManager:
     
     @staticmethod
     def _safe_close_client(client):
-        """Safely close a ZMQ client."""
+        """Safely close a ZMQ client and terminate its context."""
         try:
-            client.close()
+            client.terminate()  # Use terminate() to cleanup context
         except Exception as e:
             logger.warning(f"Error closing client: {e}", method="_safe_close_client")
 

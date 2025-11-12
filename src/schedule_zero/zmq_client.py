@@ -48,13 +48,14 @@ class ZMQClient:
             self.logger.error(f"Failed to connect: {e}", method="connect", exc_info=True)
             raise
     
-    def call(self, method: str, params: dict = None) -> dict:
+    def call(self, method: str, params: dict = None, auto_reconnect: bool = True) -> dict:
         """
         Make an RPC-style call to the remote handler.
         
         Args:
             method: Method name to call on the remote handler
             params: Dictionary of parameters to pass to the method
+            auto_reconnect: Automatically reconnect on socket state errors
             
         Returns:
             dict: Response from the remote method
@@ -85,16 +86,30 @@ class ZMQClient:
             return response
             
         except zmq.Again as e:
-            # Timeout
+            # Timeout - MUST recreate socket in REQ/REP pattern
             self.logger.error(f"Request timeout after {self.timeout}ms: {method}", method="call")
-            # Need to close and recreate socket after timeout in REQ/REP pattern
-            self.close()
+            self._recreate_socket()
             raise TimeoutError(f"Request timeout: {method}") from e
+            
+        except zmq.ZMQError as e:
+            # Socket state error - recreate and retry once if auto_reconnect enabled
+            if e.errno == zmq.EFSM and auto_reconnect:
+                self.logger.warning(f"Socket state error, recreating: {e}", method="call")
+                self._recreate_socket()
+                # Retry once without auto_reconnect to prevent infinite loop
+                return self.call(method, params, auto_reconnect=False)
+            else:
+                self.logger.error(f"ZMQ error calling {method}: {e}", method="call", exc_info=True)
+                self._recreate_socket()
+                raise
+                
         except json.JSONDecodeError as e:
             self.logger.error(f"Invalid JSON response: {e}", method="call", exc_info=True)
+            self._recreate_socket()
             raise
         except Exception as e:
             self.logger.error(f"Error calling {method}: {e}", method="call", exc_info=True)
+            self._recreate_socket()
             raise
     
     def ping(self) -> str:
@@ -112,6 +127,32 @@ class ZMQClient:
             return response.get("message", "pong")
         raise ConnectionError(f"Ping failed: {response.get('error', 'Unknown error')}")
     
+    def _recreate_socket(self):
+        """Recreate the socket after an error. Required for REQ/REP pattern recovery."""
+        self.logger.debug("Recreating socket", method="_recreate_socket")
+        was_connected = self._connected
+        
+        # Close existing socket
+        if self.socket:
+            try:
+                self.socket.close(linger=0)  # Don't wait for pending messages
+            except Exception as e:
+                self.logger.warning(f"Error closing socket during recreation: {e}", 
+                                  method="_recreate_socket")
+            self.socket = None
+        
+        self._connected = False
+        
+        # Reconnect if we were connected before
+        if was_connected:
+            try:
+                self.connect()
+                self.logger.info("Socket recreated successfully", method="_recreate_socket")
+            except Exception as e:
+                self.logger.error(f"Failed to reconnect after socket recreation: {e}", 
+                                method="_recreate_socket", exc_info=True)
+                raise
+    
     def close(self):
         """Close the ZMQ socket and cleanup resources."""
         if self.socket:
@@ -123,6 +164,28 @@ class ZMQClient:
             finally:
                 self.socket = None
                 self._connected = False
+    
+    def terminate(self):
+        """Close socket and terminate ZMQ context. Call this for full cleanup."""
+        self.close()
+        if self.context:
+            try:
+                self.context.term()
+                self.logger.debug("Terminated ZMQ context", method="terminate")
+            except Exception as e:
+                self.logger.warning(f"Error terminating context: {e}", method="terminate")
+            finally:
+                self.context = None
+    
+    def __enter__(self):
+        """Context manager support."""
+        self.connect()
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager cleanup."""
+        self.terminate()
+        return False
     
     def __enter__(self):
         """Context manager entry."""

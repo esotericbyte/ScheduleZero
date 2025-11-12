@@ -1,6 +1,18 @@
+ding-dong-handler:
+  address: tcp://127.0.0.1:4245
+  last_updated: '2025-11-02T21:24:54.587043'
+  methods:
+  - announce_time
+  - clear_log
+  - get_chime_log
+  - play_hour_bongs
+  - play_quarter_chime
+  - ping
+  registered_at: '2025-11-02T21:24:54.587043'
+  status: unknown
 test-handler-001:
   address: tcp://127.0.0.1:4244
-  last_updated: '2025-10-28T04:25:53.817018'
+  last_updated: '2025-10-28T11:09:13.338413'
   methods:
   - append_to_file
   - clear_output
@@ -9,6 +21,7 @@ test-handler-001:
   - heartbeat
   - increment_counter
   - write_file
+  - write_timestamp
   - ping
-  registered_at: '2025-10-28T04:25:53.817018'
+  registered_at: '2025-10-28T11:09:13.338413'
   status: unknown

@@ -1,0 +1,70 @@
+/* ScheduleZero Container Layout */
+
+:root {
+    --sz-primary: #2563eb;
+    --sz-secondary: #64748b;
+    --sz-background: #f8fafc;
+    --sz-surface: #ffffff;
+    --sz-border: #e2e8f0;
+    --sz-text: #1e293b;
+    --sz-text-muted: #64748b;
+    --sz-nav-width: 250px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--sz-background);
+    color: var(--sz-text);
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Navigation Sidebar */
+sz-nav {
+    width: var(--sz-nav-width);
+    background: var(--sz-surface);
+    border-right: 1px solid var(--sz-border);
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem 0;
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+/* Main Content Area */
+.microsite-content {
+    margin-left: var(--sz-nav-width);
+    flex: 1;
+    padding: 2rem;
+    width: calc(100% - var(--sz-nav-width));
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    sz-nav {
+        width: 60px;
+    }
+    
+    .microsite-content {
+        margin-left: 60px;
+        width: calc(100% - 60px);
+    }
+}
+
+/* HTMX transitions */
+.htmx-swapping {
+    opacity: 0;
+    transition: opacity 200ms ease-out;
+}
+
+.htmx-settling {
+    opacity: 1;
+    transition: opacity 200ms ease-in;
+}

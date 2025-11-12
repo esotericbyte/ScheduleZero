@@ -25,6 +25,7 @@ from .handler_registry import RegistryManager
 from .job_executor import JobExecutor
 from .job_execution_log import JobExecutionLog
 from .zmq_registration_server import ZMQRegistrationServer
+from .microsites import registry as microsite_registry, Microsite
 from .api import (
     IndexHandler,
     ReadmeHandler,
@@ -55,6 +56,18 @@ setup_logging(
     format_style="detailed"
 )
 logger = get_logger(__name__, component="TornadoServer")
+
+# Register microsites
+from .microsites import sz_dash
+
+microsite_path = os.path.join(os.path.dirname(__file__), 'microsites')
+microsite_registry.register(Microsite(
+    name="Dashboard",
+    url_prefix="/dash",
+    routes=sz_dash.routes.routes,
+    assets_path=os.path.join(microsite_path, 'sz_dash', 'assets'),
+    templates_path=os.path.join(microsite_path, 'sz_dash', 'templates')
+))
 
 
 def log_function(handler):
@@ -122,6 +135,7 @@ def make_tornado_app(config, registry_manager, scheduler, job_executor, executio
     # Get docs path (built mkdocs site)
     docs_build_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'docs_site_build')
     
+    # Original API routes
     routes = [
         # Main UI
         (r"/", IndexHandler, {'config': config, 'template_path': portal_path}),
@@ -151,9 +165,15 @@ def make_tornado_app(config, registry_manager, scheduler, job_executor, executio
         (r"/docs/(.*)", DocsHandler, {'docs_path': docs_build_path}),
     ]
     
+    # Add microsite routes and static handlers
+    routes.extend(microsite_registry.get_all_handlers())
+    
+    # Get all template paths (portal + microsites)
+    template_paths = [portal_path] + microsite_registry.get_template_paths()
+    
     return tornado.web.Application(
         routes,
-        template_path=portal_path,
+        template_path=template_paths,
         static_path=os.path.join(portal_path, 'static'),
         debug=True,  # Set to True for development - disables template caching
         serve_traceback=True,  # Set to True to see full tracebacks in API responses

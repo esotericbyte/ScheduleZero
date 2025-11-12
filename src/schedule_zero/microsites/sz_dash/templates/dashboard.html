@@ -1,0 +1,57 @@
+{% extends "layout.html" %}
+
+{% block title %}Dashboard - ScheduleZero{% end %}
+
+{% block microsite_css %}
+<link rel="stylesheet" href="/dash/static/css/dashboard.css">
+{% end %}
+
+{% block content %}
+<div class="dashboard">
+    <header class="dashboard-header">
+        <h1>Dashboard</h1>
+        <p class="subtitle">Active schedules and system overview</p>
+    </header>
+    
+    <!-- Server-rendered static HTML -->
+    <div class="schedule-grid">
+        {% for schedule in schedules %}
+        <div class="schedule-card">
+            <div class="card-header">
+                <h3 class="job-id">{{ schedule['job_id'] }}</h3>
+                <span class="status status-{{ schedule['status'] }}">{{ schedule['status'] }}</span>
+            </div>
+            <div class="card-body">
+                <div class="info-row">
+                    <span class="label">Next Run:</span>
+                    <!-- ISLAND: Interactive countdown -->
+                    <schedule-countdown next-run="{{ schedule['next_run'] }}"></schedule-countdown>
+                </div>
+                <div class="info-row">
+                    <span class="label">Trigger:</span>
+                    <span class="value">{{ schedule['trigger'] }}</span>
+                </div>
+            </div>
+            <div class="card-actions">
+                <button class="btn-secondary"
+                        hx-get="/schedules/edit/{{ schedule['job_id'] }}"
+                        hx-target="#content">
+                    Edit
+                </button>
+                <!-- ISLAND: Delete with confirmation -->
+                <delete-button 
+                    job-id="{{ schedule['job_id'] }}"
+                    endpoint="/api/schedules/{{ schedule['job_id'] }}">
+                </delete-button>
+            </div>
+        </div>
+        {% end %}
+    </div>
+</div>
+{% end %}
+
+{% block microsite_js %}
+<!-- Only load JS for interactive islands -->
+<script src="/dash/static/js/components/schedule-countdown.js"></script>
+<script src="/dash/static/js/components/delete-button.js"></script>
+{% end %}

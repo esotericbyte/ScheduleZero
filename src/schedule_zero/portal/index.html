@@ -1,282 +1,879 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⏰ ScheduleZero - Dashboard</title>
-    <link rel="stylesheet" href="/static/main.css">
-</head>
-<body data-theme="light">
-    <nav class="navbar">
-        <div class="navbar-content">
-            <div class="logo">
-                <span>⏰</span>
-                <span>ScheduleZero</span>
-            </div>
-            <div class="navbar-controls">
-                <button class="theme-toggle" onclick="toggleTheme()" id="theme-toggle">
-                    <span id="theme-icon">🌙</span>
-                    <span id="theme-text">Dark</span>
-                </button>
-                <div class="status-badge" id="status-badge">● CHECKING</div>
-            </div>
+
+<html lang="en"><!DOCTYPE html>
+
+<head><html lang="en">
+
+    <meta charset="UTF-8"><head>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <meta charset="UTF-8">
+
+    <title>ScheduleZero Control Panel</title>    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="https://cdn.tailwindcss.com"></script>    <title>{{ title }}</title>
+
+    <style>    <script src="https://cdn.tailwindcss.com"></script>
+
+        body {     <style>
+
+            font-family: 'Courier New', monospace;         body { 
+
+            background: #0a0e27;            font-family: 'Courier New', monospace; 
+
+            color: #e0e0e0;            background: #0a0e27;
+
+        }            color: #e0e0e0;
+
+        .tab {         }
+
+            cursor: pointer;         .tab { 
+
+            border-bottom: 2px solid transparent;            cursor: pointer; 
+
+            transition: all 0.2s;            border-bottom: 2px solid transparent;
+
+        }            transition: all 0.2s;
+
+        .tab:hover {         }
+
+            border-bottom-color: #60a5fa;        .tab:hover { 
+
+            color: #60a5fa;            border-bottom-color: #60a5fa;
+
+        }            color: #60a5fa;
+
+        .tab.active {         }
+
+            border-bottom-color: #3b82f6;        .tab.active { 
+
+            color: #3b82f6;            border-bottom-color: #3b82f6;
+
+            font-weight: bold;            color: #3b82f6;
+
+        }            font-weight: bold;
+
+        .status-dot {        }
+
+            width: 8px;        .status-indicator {
+
+            height: 8px;            width: 10px;
+
+            border-radius: 50%;            height: 10px;
+
+            display: inline-block;            border-radius: 50%;
+
+            margin-right: 6px;            display: inline-block;
+
+        }            margin-right: 6px;
+
+        .status-online { background: #10b981; box-shadow: 0 0 6px #10b981; }        }
+
+        .status-offline { background: #ef4444; box-shadow: 0 0 6px #ef4444; }        .status-connected { background: #10b981; box-shadow: 0 0 8px #10b981; }
+
+        .status-unknown { background: #6b7280; }        .status-disconnected { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+
+        .metric-box {        .status-unknown { background: #6b7280; }
+
+            background: #1a1f3a;        .metric-card {
+
+            border: 1px solid #2d3748;            background: #1a1f3a;
+
+            border-radius: 4px;            border: 1px solid #2d3748;
+
+            padding: 10px 14px;            border-radius: 4px;
+
+        }            padding: 12px;
+
+        .metric-num {        }
+
+            font-size: 20px;        .metric-value {
+
+            font-weight: bold;            font-size: 24px;
+
+            color: #60a5fa;            font-weight: bold;
+
+        }            color: #60a5fa;
+
+        .metric-txt {        }
+
+            font-size: 10px;        .metric-label {
+
+            color: #9ca3af;            font-size: 11px;
+
+            text-transform: uppercase;            color: #9ca3af;
+
+            letter-spacing: 0.5px;            text-transform: uppercase;
+
+        }            letter-spacing: 0.5px;
+
+        table {         }
+
+            font-size: 12px;        .log-line {
+
+            width: 100%;            font-size: 12px;
+
+        }            padding: 4px 8px;
+
+        th {            border-left: 2px solid #374151;
+
+            background: #1a1f3a;            margin-bottom: 2px;
+
+            padding: 6px 8px;        }
+
+            text-align: left;        .log-error { border-left-color: #ef4444; color: #fca5a5; }
+
+            border-bottom: 2px solid #3b82f6;        .log-warn { border-left-color: #f59e0b; color: #fcd34d; }
+
+            font-weight: bold;        .log-info { border-left-color: #3b82f6; color: #93c5fd; }
+
+            font-size: 11px;        table { 
+
+        }            font-size: 13px;
+
+        td {            width: 100%;
+
+            padding: 6px 8px;        }
+
+            border-bottom: 1px solid #2d3748;        th {
+
+        }            background: #1a1f3a;
+
+        tr:hover {            padding: 8px;
+
+            background: #1a1f3a;            text-align: left;
+
+        }            border-bottom: 2px solid #3b82f6;
+
+        .handler-row {            font-weight: bold;
+
+            background: #1a1f3a;        }
+
+            border: 1px solid #2d3748;        td {
+
+            border-radius: 4px;            padding: 8px;
+
+            padding: 8px 12px;            border-bottom: 1px solid #2d3748;
+
+            margin-bottom: 6px;        }
+
+            display: flex;        tr:hover {
+
+            justify-content: space-between;            background: #1a1f3a;
+
+            align-items: center;        }
+
+        }        .btn {
+
+        .job-row {            padding: 6px 12px;
+
+            background: #1a1f3a;            border-radius: 4px;
+
+            border-left: 3px solid #3b82f6;            border: 1px solid #3b82f6;
+
+            padding: 8px 12px;            background: transparent;
+
+            margin-bottom: 6px;            color: #60a5fa;
+
+        }            cursor: pointer;
+
+    </style>            font-size: 12px;
+
+</head>            transition: all 0.2s;
+
+<body>        }
+
+    <div class="container mx-auto p-3 max-w-7xl">        .btn:hover {
+
+        <!-- Compact Header -->            background: #3b82f6;
+
+        <header class="mb-3 flex justify-between items-center">            color: white;
+
+            <div>        }
+
+                <span class="text-xl font-bold" style="color: #60a5fa;">SCHEDULEZERO</span>        .terminal-window {
+
+                <span class="text-xs text-gray-500 ml-2">Powered by Tornado & APScheduler</span>            background: #000;
+
+            </div>            border: 1px solid #2d3748;
+
+            <div class="flex gap-4 text-xs">            border-radius: 4px;
+
+                <span id="status-server">            padding: 12px;
+
+                    <span class="status-dot status-unknown"></span>SERVER            font-family: 'Courier New', monospace;
+
+                </span>            font-size: 12px;
+
+                <span id="status-sched">            max-height: 300px;
+
+                    <span class="status-dot status-unknown"></span>SCHED            overflow-y: auto;
+
+                </span>        }
+
+            </div>    </style>
+
+        </header></head>
+
+<body>
+
+        <!-- Metrics Row -->    <div class="container mx-auto p-4 max-w-7xl">
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">        <!-- Header with Status Indicators -->
+
+            <div class="metric-box">        <header class="mb-4">
+
+                <div class="metric-num" id="m-handlers">-</div>            <div class="flex justify-between items-center">
+
+                <div class="metric-txt">Handlers</div>                <h1 class="text-2xl font-bold" style="color: #60a5fa;">⚡ SCHEDULEZERO</h1>
+
+            </div>                <div class="flex gap-4 text-sm">
+
+            <div class="metric-box">                    <span id="server-status">
+
+                <div class="metric-num" id="m-schedules">-</div>                        <span class="status-indicator status-unknown"></span>SERVER
+
+                <div class="metric-txt">Schedules</div>                    </span>
+
+            </div>                    <span id="scheduler-status">
+
+            <div class="metric-box">                        <span class="status-indicator status-unknown"></span>SCHEDULER
+
+                <div class="metric-num" id="m-connected">-</div>                    </span>
+
+                <div class="metric-txt">Online</div>                    <span id="auto-refresh">
+
+            </div>                        <span class="status-indicator status-connected"></span>AUTO-REFRESH
+
+            <div class="metric-box">                    </span>
+
+                <div class="metric-num" id="m-next">-</div>                </div>
+
+                <div class="metric-txt">Next Job</div>            </div>
+
+            </div>        </header>
+
         </div>
-    </nav>
-    
-    <div class="container">
-        <div class="hero">
-            <h1>⏰ ScheduleZero Dashboard</h1>
-            <p>Lightweight Distributed Task Scheduling for Python</p>
-            
-            <div class="instance-info">
-                <h3>📋 Instance Information</h3>
-                <div class="instance-info-grid">
-                    <div class="instance-info-item">
-                        <span class="instance-info-label">Instance</span>
-                        <span class="instance-info-value">{{ instance_name }}</span>
-                    </div>
-                    <div class="instance-info-item">
-                        <span class="instance-info-label">Description</span>
-                        <span class="instance-info-value">{{ description }}</span>
-                    </div>
-                    <div class="instance-info-item">
-                        <span class="instance-info-label">Version</span>
-                        <span class="instance-info-value">{{ version }}</span>
-                    </div>
-                    <div class="instance-info-item">
-                        <span class="instance-info-label">Admin Contact</span>
-                        <span class="instance-info-value">{{ admin_contact }}</span>
-                    </div>
-                </div>
+
+        <!-- Metrics Dashboard -->
+
+        <!-- Tabs -->        <div id="metrics-dashboard" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+
+        <nav class="flex gap-4 mb-3 pb-2 border-b border-gray-700 text-sm">            <div class="metric-card">
+
+            <div class="tab active" data-tab="dash">DASHBOARD</div>                <div class="metric-value" id="metric-handlers">-</div>
+
+            <div class="tab" data-tab="handlers">HANDLERS</div>                <div class="metric-label">Handlers</div>
+
+            <div class="tab" data-tab="schedules">SCHEDULES</div>            </div>
+
+            <div class="tab" data-tab="docs">DOCS</div>            <div class="metric-card">
+
+        </nav>                <div class="metric-value" id="metric-schedules">-</div>
+
+                <div class="metric-label">Schedules</div>
+
+        <!-- Content -->            </div>
+
+        <main id="content" class="min-h-[400px]">            <div class="metric-card">
+
+            <p class="text-gray-500">Loading...</p>                <div class="metric-value" id="metric-connected">-</div>
+
+        </main>                <div class="metric-label">Connected</div>
+
+    </div>            </div>
+
+            <div class="metric-card">
+
+    <script>                <div class="metric-value" id="metric-next-job">-</div>
+
+        let refresh = null;                <div class="metric-label">Next Job</div>
+
             </div>
-            
-            <div>
-                <a href="/view/handlers" class="doc-link">🔌 View Handlers</a>
-                <a href="/view/schedules" class="doc-link">📅 View Schedules</a>
-                <a href="/api/health" class="doc-link secondary">❤️ Health Check</a>
-            </div>
-        </div>
-        
-        <div class="stats-grid" id="stats">
-            <div class="stat-card">
-                <div class="stat-card-header">
-                    <h3>Active Handlers</h3>
-                    <div class="stat-icon icon-blue">🔌</div>
-                </div>
-                <div class="stat-value" id="handler-count">-</div>
-                <div class="stat-change">Connected workers</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-card-header">
-                    <h3>Scheduled Jobs</h3>
-                    <div class="stat-icon icon-green">📅</div>
-                </div>
-                <div class="stat-value" id="schedule-count">-</div>
-                <div class="stat-change">Pending execution</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-card-header">
-                    <h3>Server Status</h3>
-                    <div class="stat-icon icon-purple">🚀</div>
-                </div>
-                <div class="stat-value" id="server-status">Running</div>
-                <div class="stat-change">All systems operational</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-card-header">
-                    <h3>Uptime</h3>
-                    <div class="stat-icon icon-orange">⏱️</div>
-                </div>
-                <div class="stat-value" id="uptime">Active</div>
-                <div class="stat-change">Since last restart</div>
-            </div>
-        </div>
-        
-        <div class="tabs">
-            <div class="tab-buttons">
-                <button class="tab-button active" onclick="switchTab('overview')">📊 Overview</button>
-                <button class="tab-button" onclick="switchTab('api')">🔌 API Reference</button>
-                <button class="tab-button" onclick="switchTab('docs')">📚 Documentation</button>
-                <button class="tab-button" onclick="switchTab('features')">✨ Features</button>
-            </div>
-            
-            <div id="overview" class="tab-content active">
-                <h2 style="margin-bottom: 1rem;">🎯 Welcome to ScheduleZero</h2>
-                <p style="line-height: 1.6; margin-bottom: 1.5rem; opacity: 0.8;">
-                    ScheduleZero is a resource-conscious, distributed task scheduling system built entirely in Python.
-                    Perfect for scenarios where heavyweight solutions like Celery are overkill—especially on
-                    memory-constrained systems like small VMs or edge devices.
-                </p>
-                
-                <div class="feature-grid">
-                    <div class="feature-card">
-                        <h3>🪶 Lightweight</h3>
-                        <p>No message broker required (RabbitMQ/Redis). Minimal memory footprint perfect for edge devices.</p>
-                    </div>
-                    
-                    <div class="feature-card">
-                        <h3>🚀 Fast</h3>
-                        <p>Built on modern async Python (asyncio, Tornado) for high-performance task execution.</p>
-                    </div>
-                    
-                    <div class="feature-card">
-                        <h3>🔄 Distributed</h3>
-                        <p>Scale horizontally by adding worker handlers. Each handler self-registers automatically.</p>
-                    </div>
-                    
-                    <div class="feature-card">
-                        <h3>💾 Persistent</h3>
-                        <p>SQLite-based job storage ensures your schedules survive server restarts.</p>
-                    </div>
-                    
-                    <div class="feature-card">
-                        <h3>🎨 Beautiful</h3>
-                        <p>Modern web interface for monitoring and controlling your distributed task scheduler.</p>
-                    </div>
-                    
-                    <div class="feature-card">
-                        <h3>🛡️ Reliable</h3>
-                        <p>Built-in retry logic with exponential backoff ensures job execution resilience.</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div id="api" class="tab-content">
-                <h2 style="margin-bottom: 1rem;">🔌 API Endpoints</h2>
-                <ul class="api-list">
-                    <li class="api-item">
-                        <span class="api-method method-get">GET</span>
-                        <span class="api-path">/api/handlers</span>
-                        <div class="api-desc">List all registered handlers with their status and available methods</div>
-                    </li>
-                    
-                    <li class="api-item">
-                        <span class="api-method method-get">GET</span>
-                        <span class="api-path">/api/schedules</span>
-                        <div class="api-desc">List all scheduled jobs with next fire times and trigger details</div>
-                    </li>
-                    
-                    <li class="api-item">
-                        <span class="api-method method-post">POST</span>
-                        <span class="api-path">/api/schedule</span>
-                        <div class="api-desc">Schedule a new job with date, interval, or cron triggers</div>
-                    </li>
-                    
-                    <li class="api-item">
-                        <span class="api-method method-post">POST</span>
-                        <span class="api-path">/api/run_now</span>
-                        <div class="api-desc">Execute a job immediately without scheduling</div>
-                    </li>
-                    
-                    <li class="api-item">
-                        <span class="api-method method-get">GET</span>
-                        <span class="api-path">/api/config</span>
-                        <div class="api-desc">Get current server configuration from config.yaml</div>
-                    </li>
-                    
-                    <li class="api-item">
-                        <span class="api-method method-get">GET</span>
-                        <span class="api-path">/api/health</span>
-                        <div class="api-desc">Health check endpoint for monitoring and load balancers</div>
-                    </li>
-                </ul>
-            </div>
-            
-            <div id="docs" class="tab-content">
-                <h2 style="margin-bottom: 1rem;">📚 Documentation</h2>
-                <p style="opacity: 0.8; margin-bottom: 2rem;">
-                    Comprehensive documentation for understanding and extending ScheduleZero.
-                </p>
-                
-                <div style="margin-bottom: 2rem;">
-                    <h3 style="margin-bottom: 1rem;">📖 Core Documentation</h3>
-                    <a href="/readme" class="doc-link">📄 Main README</a>
-                    <div style="opacity: 0.7; margin-top: 0.5rem;">
-                        Complete architecture guide, component rationale, and getting started instructions.
-                    </div>
-                </div>
-                
-                <div style="background: var(--card-bg-secondary); padding: 1.5rem; border-radius: 0.75rem; border-left: 4px solid var(--primary);">
-                    <h4 style="margin-bottom: 0.5rem;">💡 Quick Links</h4>
-                    <ul style="list-style: none; opacity: 0.8;">
-                        <li style="margin-bottom: 0.5rem;">🏗️ <strong>Architecture:</strong> Tornado + APScheduler 4.x + zerorpc + SQLite</li>
-                        <li style="margin-bottom: 0.5rem;">🔌 <strong>Ports:</strong> Web UI (8888), Registration (4242), Handlers (4243+)</li>
-                        <li style="margin-bottom: 0.5rem;">📦 <strong>Package Manager:</strong> Poetry</li>
-                        <li style="margin-bottom: 0.5rem;">🐍 <strong>Python Version:</strong> 3.12+</li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div id="features" class="tab-content">
-                <h2 style="margin-bottom: 1rem;">✨ Feature Highlights</h2>
-                
-                <div style="background: var(--card-bg-secondary); padding: 1.5rem; border-radius: 0.75rem; margin-bottom: 1.5rem;">
-                    <h3 style="margin-bottom: 1rem;">🕐 Flexible Scheduling</h3>
-                    <p style="opacity: 0.8; margin-bottom: 1rem;">
-                        Support for multiple trigger types powered by APScheduler 4.x:
-                    </p>
-                    <ul style="opacity: 0.8; margin-left: 1.5rem;">
-                        <li><strong>Date Triggers:</strong> Run once at a specific date/time</li>
-                        <li><strong>Interval Triggers:</strong> Repeat every N seconds/minutes/hours</li>
-                        <li><strong>Cron Triggers:</strong> Advanced scheduling with cron expressions</li>
-                    </ul>
-                </div>
-                
-                <div style="background: var(--card-bg-secondary); padding: 1.5rem; border-radius: 0.75rem; margin-bottom: 1.5rem;">
-                    <h3 style="margin-bottom: 1rem;">📡 Remote Execution</h3>
-                    <p style="opacity: 0.8; margin-bottom: 1rem;">
-                        Distribute jobs across multiple handler processes using zerorpc:
-                    </p>
-                    <ul style="opacity: 0.8; margin-left: 1.5rem;">
-                        <li>Handlers self-register with the central server</li>
-                        <li>Method-level routing (call specific handler methods)</li>
-                        <li>Connection pooling with lazy initialization</li>
-                        <li>Automatic reconnection on failure</li>
-                    </ul>
-                </div>
-                
-                <div style="background: var(--card-bg-secondary); padding: 1.5rem; border-radius: 0.75rem; margin-bottom: 1.5rem;">
-                    <h3 style="margin-bottom: 1rem;">💪 Resilience</h3>
-                    <p style="opacity: 0.8; margin-bottom: 1rem;">
-                        Built-in reliability features for production environments:
-                    </p>
-                    <ul style="opacity: 0.8; margin-left: 1.5rem;">
-                        <li>Exponential backoff with jitter for retries</li>
-                        <li>Thread-safe handler registry operations</li>
-                        <li>Graceful shutdown handling</li>
-                        <li>Job persistence across restarts</li>
-                    </ul>
-                </div>
-                
-                <div style="background: var(--card-bg-secondary); padding: 1.5rem; border-radius: 0.75rem;">
-                    <h3 style="margin-bottom: 1rem;">🎯 Developer Friendly</h3>
-                    <p style="opacity: 0.8; margin-bottom: 1rem;">
-                        Easy to extend and integrate:
-                    </p>
-                    <ul style="opacity: 0.8; margin-left: 1.5rem;">
-                        <li>Abstract base class for handler implementations</li>
-                        <li>RESTful HTTP API for integration</li>
-                        <li>YAML-based configuration</li>
-                        <li>Comprehensive documentation</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
+
+        // Tab clicks        </div>
+
+        document.querySelectorAll('.tab').forEach(tab => {
+
+            tab.addEventListener('click', () => {        <!-- Tab Navigation -->
+
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));        <nav class="flex gap-6 mb-4 pb-2 border-b border-gray-700">
+
+                tab.classList.add('active');            <div class="tab active" data-tab="dashboard">DASHBOARD</div>
+
+                load(tab.dataset.tab);            <div class="tab" data-tab="handlers">HANDLERS</div>
+
+            });            <div class="tab" data-tab="schedules">SCHEDULES</div>
+
+        });            <div class="tab" data-tab="logs">LOGS</div>
+
+            <div class="tab" data-tab="info">INFO</div>
+
+        // Init        </nav>
+
+        load('dash');
+
+        refresh = setInterval(() => {        <!-- Tab Content -->
+
+            const active = document.querySelector('.tab.active').dataset.tab;        <main id="tab-content" class="min-h-[400px]">
+
+            if (active !== 'docs') load(active, true);            <p>Loading...</p>
+
+        }, 5000);        </main>
+
+
+
+        async function load(tab, silent = false) {        <footer class="text-center text-gray-600 mt-6 text-xs">
+
+            const el = document.getElementById('content');            ScheduleZero Control Panel • <a href="#info" class="text-blue-400 hover:text-blue-300">Docs</a>
+
+            if (!silent) el.innerHTML = '<p class="text-gray-500">Loading...</p>';        </footer>
+
     </div>
-    
-    <footer>
-        <div class="footer-links">
-            <a href="https://github.com/yourusername/schedule-zero">GitHub</a>
-            <a href="/view/handlers">Handlers</a>
-            <a href="/readme">Docs</a>
-            <a href="/api/health">Status</a>
-        </div>
-        <p>Made with ❤️ and Python | ScheduleZero © 2025</p>
-    </footer>
-    
-    <script src="/static/main.js"></script>
+
+            try {
+
+                switch(tab) {    <script>
+
+                    case 'dash': await showDash(); break;        let autoRefresh = true;
+
+                    case 'handlers': await showHandlers(); break;        let refreshInterval = null;
+
+                    case 'schedules': await showSchedules(); break;
+
+                    case 'docs': showDocs(); break;        // Tab Management
+
+                }        document.querySelectorAll('.tab').forEach(tab => {
+
+                updateMetrics();            tab.addEventListener('click', () => {
+
+            } catch (e) {                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+
+                el.innerHTML = `<p class="text-red-400">Error: ${e.message}</p>`;                tab.classList.add('active');
+
+            }                loadTabContent(tab.dataset.tab);
+
+        }            });
+
+        });
+
+        async function showDash() {
+
+            const [hs, ss] = await Promise.all([        // Load initial content
+
+                fetch('/api/handler_list').then(r => r.json()),        loadTabContent('dashboard');
+
+                fetch('/api/schedules').then(r => r.json())        startAutoRefresh();
+
+            ]);
+
+        function startAutoRefresh() {
+
+            const online = hs.filter(h => h.connected);            if (refreshInterval) clearInterval(refreshInterval);
+
+            const upcoming = ss.schedules            refreshInterval = setInterval(() => {
+
+                .filter(s => new Date(s.next_fire_time) > new Date())                if (autoRefresh) {
+
+                .sort((a, b) => new Date(a.next_fire_time) - new Date(b.next_fire_time))                    const activeTab = document.querySelector('.tab.active').dataset.tab;
+
+                .slice(0, 8);                    loadTabContent(activeTab, true);
+
+                }
+
+            document.getElementById('content').innerHTML = `            }, 5000);
+
+                <div class="grid md:grid-cols-2 gap-4">        }
+
+                    <div>
+
+                        <h3 class="text-sm font-bold mb-2 text-blue-400">ACTIVE HANDLERS</h3>        async function loadTabContent(tab, silent = false) {
+
+                        ${online.length ? online.map(h => `            const content = document.getElementById('tab-content');
+
+                            <div class="handler-row">            if (!silent) content.innerHTML = '<p class="text-gray-500">Loading...</p>';
+
+                                <div>
+
+                                    <span class="status-dot status-online"></span>            try {
+
+                                    <strong class="text-sm">${h.handler_id}</strong>                switch(tab) {
+
+                                </div>                    case 'dashboard':
+
+                                <div class="text-xs text-gray-500">${h.address.split('//')[1]}</div>                        await renderDashboard();
+
+                            </div>                        break;
+
+                        `).join('') : '<p class="text-gray-500 text-sm">No handlers online</p>'}                    case 'handlers':
+
+                    </div>                        await renderHandlers();
+
+                    <div>                        break;
+
+                        <h3 class="text-sm font-bold mb-2 text-blue-400">UPCOMING JOBS</h3>                    case 'schedules':
+
+                        ${upcoming.length ? upcoming.map(j => {                        await renderSchedules();
+
+                            const fire = new Date(j.next_fire_time);                        break;
+
+                            const min = Math.round((fire - new Date()) / 60000);                    case 'logs':
+
+                            return `                        await renderLogs();
+
+                                <div class="job-row">                        break;
+
+                                    <div class="flex justify-between text-xs">                    case 'info':
+
+                                        <span><strong>${j.handler_id}</strong>.${j.job_method}</span>                        await renderInfo();
+
+                                        <span class="text-yellow-400">${min}m</span>                        break;
+
+                                    </div>                }
+
+                                    <div class="text-xs text-gray-500 mt-1">${fire.toLocaleString()}</div>                updateMetrics();
+
+                                </div>            } catch (error) {
+
+                            `;                content.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+
+                        }).join('') : '<p class="text-gray-500 text-sm">No jobs scheduled</p>'}            }
+
+                    </div>        }
+
+                </div>
+
+            `;        async function renderDashboard() {
+
+        }            const [handlers, schedules] = await Promise.all([
+
+                fetch('/api/handler_list').then(r => r.json()),
+
+        async function showHandlers() {                fetch('/api/schedules').then(r => r.json())
+
+            const hs = await fetch('/api/handler_list').then(r => r.json());            ]);
+
+            document.getElementById('content').innerHTML = `
+
+                <h3 class="text-sm font-bold mb-3 text-blue-400">HANDLER REGISTRY</h3>            const content = document.getElementById('tab-content');
+
+                <table>            const activeHandlers = handlers.filter(h => h.connected);
+
+                    <thead>            const nextJobs = schedules.schedules
+
+                        <tr>                .filter(s => new Date(s.next_fire_time) > new Date())
+
+                            <th>STATUS</th>                .sort((a, b) => new Date(a.next_fire_time) - new Date(b.next_fire_time))
+
+                            <th>HANDLER</th>                .slice(0, 5);
+
+                            <th>ADDRESS</th>
+
+                            <th>REGISTERED</th>            content.innerHTML = `
+
+                        </tr>                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    </thead>                    <div>
+
+                    <tbody>                        <h3 class="text-lg font-bold mb-3" style="color: #60a5fa;">Active Handlers</h3>
+
+                        ${hs.map(h => `                        <div class="space-y-2">
+
+                            <tr>                            ${activeHandlers.length ? activeHandlers.map(h => `
+
+                                <td>                                <div class="metric-card flex justify-between items-center">
+
+                                    <span class="status-dot ${h.connected ? 'status-online' : 'status-offline'}"></span>                                    <div>
+
+                                    ${h.connected ? 'ON' : 'OFF'}                                        <span class="status-indicator status-connected"></span>
+
+                                </td>                                        <strong>${h.handler_id}</strong>
+
+                                <td><strong>${h.handler_id}</strong></td>                                    </div>
+
+                                <td class="text-gray-500">${h.address}</td>                                    <div class="text-xs text-gray-400">${h.address}</div>
+
+                                <td class="text-gray-500">${new Date(h.registered_at).toLocaleString()}</td>                                </div>
+
+                            </tr>                            `).join('') : '<p class="text-gray-500">No active handlers</p>'}
+
+                        `).join('')}                        </div>
+
+                    </tbody>                    </div>
+
+                </table>                    <div>
+
+            `;                        <h3 class="text-lg font-bold mb-3" style="color: #60a5fa;">Upcoming Jobs</h3>
+
+        }                        <div class="space-y-2">
+
+                            ${nextJobs.length ? nextJobs.map(job => {
+
+        async function showSchedules() {                                const fireTime = new Date(job.next_fire_time);
+
+            const data = await fetch('/api/schedules').then(r => r.json());                                const minutes = Math.round((fireTime - new Date()) / 60000);
+
+            const ss = data.schedules.sort((a, b) =>                                 return `
+
+                new Date(a.next_fire_time) - new Date(b.next_fire_time)                                    <div class="metric-card">
+
+            );                                        <div class="flex justify-between">
+
+                                            <span class="text-sm font-bold">${job.handler_id}.${job.job_method}</span>
+
+            document.getElementById('content').innerHTML = `                                            <span class="text-xs text-yellow-400">in ${minutes}m</span>
+
+                <h3 class="text-sm font-bold mb-3 text-blue-400">ACTIVE SCHEDULES (${ss.length})</h3>                                        </div>
+
+                <div style="max-height: 500px; overflow-y: auto;">                                        <div class="text-xs text-gray-400 mt-1">${fireTime.toLocaleString()}</div>
+
+                    <table>                                    </div>
+
+                        <thead>                                `;
+
+                            <tr>                            }).join('') : '<p class="text-gray-500">No scheduled jobs</p>'}
+
+                                <th>HANDLER</th>                        </div>
+
+                                <th>METHOD</th>                    </div>
+
+                                <th>NEXT FIRE</th>                </div>
+
+                                <th>TRIGGER</th>            `;
+
+                            </tr>        }
+
+                        </thead>
+
+                        <tbody>        async function renderHandlers() {
+
+                            ${ss.map(s => {            const handlers = await fetch('/api/handler_list').then(r => r.json());
+
+                                const fire = new Date(s.next_fire_time);            const content = document.getElementById('tab-content');
+
+                                const past = fire < new Date();
+
+                                return `            content.innerHTML = `
+
+                                    <tr style="${past ? 'opacity: 0.4;' : ''}">                <div>
+
+                                        <td><strong>${s.handler_id}</strong></td>                    <div class="flex justify-between items-center mb-4">
+
+                                        <td class="text-blue-400">${s.job_method}</td>                        <h3 class="text-lg font-bold" style="color: #60a5fa;">Handler Registry</h3>
+
+                                        <td>${fire.toLocaleString()}</td>                        <button class="btn" onclick="loadTabContent('handlers')">↻ REFRESH</button>
+
+                                        <td class="text-gray-500">${s.trigger_type}</td>                    </div>
+
+                                    </tr>                    <table>
+
+                                `;                        <thead>
+
+                            }).join('')}                            <tr>
+
+                        </tbody>                                <th>STATUS</th>
+
+                    </table>                                <th>HANDLER ID</th>
+
+                </div>                                <th>ADDRESS</th>
+
+            `;                                <th>REGISTERED</th>
+
+        }                            </tr>
+
+                        </thead>
+
+        function showDocs() {                        <tbody>
+
+            document.getElementById('content').innerHTML = `                            ${handlers.map(h => `
+
+                <div class="space-y-4 text-sm">                                <tr>
+
+                    <div>                                    <td>
+
+                        <h3 class="text-lg font-bold mb-2 text-blue-400">ScheduleZero</h3>                                        <span class="status-indicator ${h.connected ? 'status-connected' : 'status-disconnected'}"></span>
+
+                        <p class="text-gray-300">                                        ${h.connected ? 'ONLINE' : 'OFFLINE'}
+
+                            Distributed job scheduler built with APScheduler 4.x, ZeroMQ, and Tornado.                                    </td>
+
+                        </p>                                    <td><strong>${h.handler_id}</strong></td>
+
+                    </div>                                    <td class="text-gray-400">${h.address}</td>
+
+                                    <td class="text-gray-400 text-xs">${new Date(h.registered_at).toLocaleString()}</td>
+
+                    <div>                                </tr>
+
+                        <h4 class="font-bold mb-2 text-blue-400">Deployments</h4>                            `).join('')}
+
+                        <table>                        </tbody>
+
+                            <thead>                    </table>
+
+                                <tr>                </div>
+
+                                    <th>NAME</th>            `;
+
+                                    <th>WEB</th>        }
+
+                                    <th>ZMQ</th>
+
+                                    <th>PURPOSE</th>        async function renderSchedules() {
+
+                                </tr>            const data = await fetch('/api/schedules').then(r => r.json());
+
+                            </thead>            const content = document.getElementById('tab-content');
+
+                            <tbody>
+
+                                <tr><td>default</td><td>8888</td><td>4242</td><td>Development</td></tr>            const schedules = data.schedules.sort((a, b) => 
+
+                                <tr><td>clock</td><td>8889</td><td>4243</td><td>Time announcements</td></tr>                new Date(a.next_fire_time) - new Date(b.next_fire_time)
+
+                                <tr><td>production</td><td>8890</td><td>4244</td><td>Production</td></tr>            );
+
+                                <tr><td>test</td><td>8891</td><td>4245</td><td>Testing</td></tr>
+
+                            </tbody>            content.innerHTML = `
+
+                        </table>                <div>
+
+                    </div>                    <div class="flex justify-between items-center mb-4">
+
+                        <h3 class="text-lg font-bold" style="color: #60a5fa;">Active Schedules</h3>
+
+                    <div>                        <button class="btn" onclick="loadTabContent('schedules')">↻ REFRESH</button>
+
+                        <h4 class="font-bold mb-2 text-blue-400">Documentation</h4>                    </div>
+
+                        <ul class="list-disc list-inside text-gray-300 space-y-1">                    <div style="max-height: 500px; overflow-y: auto;">
+
+                            <li><a href="https://github.com/esotericbyte/ScheduleZero" class="text-blue-400 hover:text-blue-300">GitHub Repository</a></li>                        <table>
+
+                            <li>README.md - Project overview</li>                            <thead>
+
+                            <li>DEPLOYMENT_GUIDE.md - Multi-deployment setup</li>                                <tr>
+
+                            <li>docs/EXECUTION_LOGGING_API.md - Job logging</li>                                    <th>JOB ID</th>
+
+                            <li>examples/ - Discord integration examples</li>                                    <th>HANDLER</th>
+
+                        </ul>                                    <th>METHOD</th>
+
+                    </div>                                    <th>NEXT FIRE TIME</th>
+
+                                    <th>TRIGGER</th>
+
+                    <div>                                </tr>
+
+                        <h4 class="font-bold mb-2 text-blue-400">Quick Commands</h4>                            </thead>
+
+                        <div style="background: #000; padding: 12px; border-radius: 4px; font-size: 11px;">                            <tbody>
+
+                            <div class="text-green-400"># Start clock deployment</div>                                ${schedules.map(s => {
+
+                            <div>poetry run python start_clock_deployment.py</div>                                    const nextFire = new Date(s.next_fire_time);
+
+                            <div class="text-green-400 mt-2"># Stop clock deployment</div>                                    const isPast = nextFire < new Date();
+
+                            <div>poetry run python stop_clock_deployment.py</div>                                    return `
+
+                        </div>                                        <tr style="${isPast ? 'opacity: 0.5;' : ''}">
+
+                    </div>                                            <td class="text-xs text-gray-400">${s.job_id}</td>
+
+                </div>                                            <td><strong>${s.handler_id}</strong></td>
+
+            `;                                            <td class="text-blue-400">${s.job_method}</td>
+
+        }                                            <td class="text-xs">${nextFire.toLocaleString()}</td>
+
+                                            <td class="text-xs text-gray-400">${s.trigger_type}</td>
+
+        async function updateMetrics() {                                        </tr>
+
+            try {                                    `;
+
+                const [hs, ss] = await Promise.all([                                }).join('')}
+
+                    fetch('/api/handler_list').then(r => r.json()),                            </tbody>
+
+                    fetch('/api/schedules').then(r => r.json())                        </table>
+
+                ]);                    </div>
+
+                </div>
+
+                const online = hs.filter(h => h.connected).length;            `;
+
+                const next = ss.schedules        }
+
+                    .filter(s => new Date(s.next_fire_time) > new Date())
+
+                    .sort((a, b) => new Date(a.next_fire_time) - new Date(b.next_fire_time))[0];        async function renderLogs() {
+
+            const content = document.getElementById('tab-content');
+
+                document.getElementById('m-handlers').textContent = hs.length;            content.innerHTML = `
+
+                document.getElementById('m-schedules').textContent = ss.schedules.length;                <div>
+
+                document.getElementById('m-connected').textContent = online;                    <h3 class="text-lg font-bold mb-3" style="color: #60a5fa;">System Logs</h3>
+
+                                    <div class="terminal-window">
+
+                if (next) {                        <div class="log-line log-info">[INFO] ScheduleZero control panel loaded</div>
+
+                    const min = Math.round((new Date(next.next_fire_time) - new Date()) / 60000);                        <div class="log-line log-info">[INFO] Auto-refresh enabled (5s interval)</div>
+
+                    document.getElementById('m-next').textContent = min + 'm';                        <div class="log-line log-warn">[WARN] Log streaming not yet implemented</div>
+
+                } else {                        <div class="log-line log-info">[INFO] Check deployment logs at: deployments/clock/logs/</div>
+
+                    document.getElementById('m-next').textContent = '-';                    </div>
+
+                }                    <p class="text-gray-500 text-xs mt-4">
+
+                        Real-time log streaming coming soon. For now, check log files in deployments/{deployment}/logs/
+
+                document.querySelector('#status-server .status-dot').className = 'status-dot status-online';                    </p>
+
+                document.querySelector('#status-sched .status-dot').className =                 </div>
+
+                    'status-dot ' + (ss.schedules.length > 0 ? 'status-online' : 'status-offline');            `;
+
+        }
+
+            } catch (e) {
+
+                console.error('Metrics update failed:', e);        async function renderInfo() {
+
+            }            const content = document.getElementById('tab-content');
+
+        }            content.innerHTML = `
+
+    </script>                <div class="space-y-6">
+
+</body>                    <div>
+
+</html>                        <h3 class="text-xl font-bold mb-3" style="color: #60a5fa;">ScheduleZero</h3>
+
+                        <p class="text-gray-300 mb-4">
+                            A distributed job scheduler built with APScheduler 4.x, ZeroMQ, and Tornado.
+                        </p>
+                    </div>
+
+                    <div>
+                        <h4 class="text-lg font-bold mb-2" style="color: #60a5fa;">Architecture</h4>
+                        <ul class="list-disc list-inside text-gray-300 space-y-1">
+                            <li><strong>Server:</strong> Tornado web server with APScheduler backend</li>
+                            <li><strong>Handlers:</strong> ZeroMQ-based job execution handlers</li>
+                            <li><strong>Database:</strong> SQLite with aiosqlite for async operations</li>
+                            <li><strong>API:</strong> RESTful JSON API for scheduling and monitoring</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="text-lg font-bold mb-2" style="color: #60a5fa;">Deployments</h4>
+                        <table class="text-sm">
+                            <thead>
+                                <tr>
+                                    <th>NAME</th>
+                                    <th>WEB PORT</th>
+                                    <th>ZMQ PORT</th>
+                                    <th>PURPOSE</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>default</td>
+                                    <td>8888</td>
+                                    <td>4242</td>
+                                    <td>Development</td>
+                                </tr>
+                                <tr>
+                                    <td>clock</td>
+                                    <td>8889</td>
+                                    <td>4243</td>
+                                    <td>Time announcements</td>
+                                </tr>
+                                <tr>
+                                    <td>production</td>
+                                    <td>8890</td>
+                                    <td>4244</td>
+                                    <td>Production workloads</td>
+                                </tr>
+                                <tr>
+                                    <td>test</td>
+                                    <td>8891</td>
+                                    <td>4245</td>
+                                    <td>Testing</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div>
+                        <h4 class="text-lg font-bold mb-2" style="color: #60a5fa;">Documentation</h4>
+                        <ul class="list-disc list-inside text-gray-300 space-y-1">
+                            <li><a href="https://github.com/esotericbyte/ScheduleZero" class="text-blue-400 hover:text-blue-300">GitHub Repository</a></li>
+                            <li>README.md - Project overview and quick start</li>
+                            <li>DEPLOYMENT_GUIDE.md - Multi-deployment configuration</li>
+                            <li>docs/EXECUTION_LOGGING_API.md - Job execution logging</li>
+                            <li>docs/PORT_ZERO_BINDING.md - Handler port configuration</li>
+                            <li>examples/ - Discord bot integration examples</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="text-lg font-bold mb-2" style="color: #60a5fa;">Quick Start</h4>
+                        <div class="terminal-window">
+                            <div class="text-green-400"># Start the clock deployment</div>
+                            <div>poetry run python start_clock_deployment.py --reset-db</div>
+                            <div class="text-green-400 mt-2"># Stop the clock deployment</div>
+                            <div>poetry run python stop_clock_deployment.py</div>
+                            <div class="text-green-400 mt-2"># Check handler status</div>
+                            <div>curl http://localhost:8889/api/handler_list</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function updateMetrics() {
+            try {
+                const [handlers, schedules] = await Promise.all([
+                    fetch('/api/handler_list').then(r => r.json()),
+                    fetch('/api/schedules').then(r => r.json())
+                ]);
+
+                const connected = handlers.filter(h => h.connected).length;
+                const nextJob = schedules.schedules
+                    .filter(s => new Date(s.next_fire_time) > new Date())
+                    .sort((a, b) => new Date(a.next_fire_time) - new Date(b.next_fire_time))[0];
+
+                document.getElementById('metric-handlers').textContent = handlers.length;
+                document.getElementById('metric-schedules').textContent = schedules.schedules.length;
+                document.getElementById('metric-connected').textContent = connected;
+                
+                if (nextJob) {
+                    const minutes = Math.round((new Date(nextJob.next_fire_time) - new Date()) / 60000);
+                    document.getElementById('metric-next-job').textContent = minutes + 'm';
+                } else {
+                    document.getElementById('metric-next-job').textContent = 'None';
+                }
+
+                // Update status indicators
+                document.querySelector('#server-status .status-indicator').className = 
+                    'status-indicator status-connected';
+                document.querySelector('#scheduler-status .status-indicator').className = 
+                    'status-indicator ' + (schedules.schedules.length > 0 ? 'status-connected' : 'status-disconnected');
+
+            } catch (error) {
+                console.error('Failed to update metrics:', error);
+            }
+        }
+    </script>
 </body>
-</html>
+</html><script> const contentEl=document.getElementById('content'),navLinks=document.querySelectorAll('nav a');let currentApiRequestController=null;async function fetchData(url){if(currentApiRequestController){try{currentApiRequestController.abort()}catch(e){console.warn("Could not abort previous request",e)}} currentApiRequestController=new AbortController();const signal=currentApiRequestController.signal;showLoading();try{const response=await fetch(url,{signal});if(!response.ok){let errorMsg=`HTTP error! Status: ${response.status}`;try{const errData=await response.json();errorMsg=errData?.error?.message||errorMsg}catch(e){} throw new Error(errorMsg)} return await response.json()}catch(error){if(error.name==='AbortError'){console.log('Fetch aborted');return null} console.error('Fetch error:',error);showError(`Failed to load data: ${error.message}`);return null}finally{if(signal===currentApiRequestController?.signal){currentApiRequestController=null}}} function showLoading(){contentEl.innerHTML='<p>Loading<span class="loader"></span></p>'} function showError(message){contentEl.innerHTML=`<p class="text-red-600 font-bold">Error:</p><p>${message}</p>`} function setActiveLink(hash){navLinks.forEach(link=>{if(link.getAttribute('href')===hash){link.classList.add('active')}else{link.classList.remove('active')}})} function escapeHtml(unsafe){return unsafe.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")} function renderReadme(data){if(!data)return;contentEl.innerHTML=`<h2 class="text-xl font-semibold mb-4">README</h2><pre class="bg-gray-50 p-4 rounded border text-sm whitespace-pre-wrap">${escapeHtml(data.readme_content||'Failed to load README.')}</pre>`} function renderAbout(data){if(!data)return;let content='<h2 class="text-xl font-semibold mb-4">About This Instance</h2>';if(data.error){content+=`<p class="text-red-500">${escapeHtml(data.error)}</p>`}else{content+='<ul class="list-disc pl-5 space-y-1">';for(const key in data){content+=`<li><strong>${escapeHtml(key.replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase()))}:</strong> ${escapeHtml(String(data[key]))}</li>`} content+='</ul>'} contentEl.innerHTML=content} function renderRegistrations(data){if(!data)return;let tableHtml='<h2 class="text-xl font-semibold mb-4">Registered Handlers</h2>';if(!data.handlers||data.handlers.length===0){tableHtml+='<p>No handlers are currently registered.</p>'}else{tableHtml+='<div class="overflow-x-auto"><table class="w-full min-w-[600px]"><thead><tr><th>ID</th><th>Address</th><th>Status</th><th>Methods</th></tr></thead><tbody>';data.handlers.forEach(h=>{tableHtml+=`<tr><td>${escapeHtml(h.id)}</td><td>${escapeHtml(h.address)}</td><td class="${h.status.startsWith('Connected')?'text-green-600':'text-red-600'}">${escapeHtml(h.status)}</td><td>${escapeHtml(h.methods.join(', '))}</td></tr>`});tableHtml+='</tbody></table></div>'} contentEl.innerHTML=tableHtml} function renderSchedules(data){if(!data)return;const{schedules,pagination}=data;let contentHtml=`<h2 class="text-xl font-semibold mb-4">Scheduled Jobs</h2><div class="mb-4 flex flex-wrap items-center gap-4"><div><label for="start_time" class="mr-2">Start (UTC):</label><input type="datetime-local" id="start_time" class="border rounded p-1"></div><div><label for="end_time" class="mr-2">End (UTC):</label><input type="datetime-local" id="end_time" class="border rounded p-1"></div><button id="filter_button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded">Filter List</button><span class="text-sm text-gray-600">(Default: Next 7 days)</span></div>`;if(!schedules||schedules.length===0){contentHtml+='<p>No schedules found matching the criteria.</p>'}else{contentHtml+=`<p class="text-sm mb-2">Showing ${pagination.offset+1}-${Math.min(pagination.offset+pagination.limit,pagination.total)} of ${pagination.total} schedules.</p><div class="overflow-x-auto"><table class="w-full text-sm min-w-[800px]"><thead><tr><th>ID</th><th>Next Fire Time (UTC)</th><th>Handler</th><th>Method</th><th>Params</th><th>Trigger</th><th>Status</th></tr></thead><tbody>`;schedules.forEach(s=>{const nextFire=s.next_fire_time?new Date(s.next_fire_time).toISOString().replace('T',' ').substring(0,19):'N/A';const status=s.paused?`Paused until ${new Date(s.paused_until).toISOString().substring(0,10)}`:'Active';contentHtml+=`<tr><td class="break-all">${escapeHtml(s.id)}</td><td>${escapeHtml(nextFire)}</td><td>${escapeHtml(s.handler_id)}</td><td>${escapeHtml(s.method_name)}</td><td><pre class="text-xs bg-gray-50 p-1 rounded">${escapeHtml(JSON.stringify(s.job_params,null,2))}</pre></td><td class="text-xs">${escapeHtml(s.trigger)}</td><td class="${s.paused?'text-orange-600':'text-green-600'}">${escapeHtml(status)}</td></tr>`});contentHtml+='</tbody></table></div>';contentHtml+='<div class="mt-4 flex justify-between items-center">';const canPrev=pagination.offset>0;const canNext=(pagination.offset+pagination.limit)<pagination.total;contentHtml+=`<button id="prev_page" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-3 rounded ${!canPrev?'opacity-50 cursor-not-allowed':''}" ${!canPrev?'disabled':''}>&lt; Previous</button>`;contentHtml+=`<span class="text-sm">Page ${Math.floor(pagination.offset/pagination.limit)+1} of ${Math.ceil(pagination.total/pagination.limit)}</span>`;contentHtml+=`<button id="next_page" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-3 rounded ${!canNext?'opacity-50 cursor-not-allowed':''}" ${!canNext?'disabled':''}>Next &gt;</button>`;contentHtml+='</div>'} contentEl.innerHTML=contentHtml;document.getElementById('filter_button')?.addEventListener('click',()=>loadSchedules(0));document.getElementById('prev_page')?.addEventListener('click',()=>loadSchedules(pagination.offset-pagination.limit));document.getElementById('next_page')?.addEventListener('click',()=>loadSchedules(pagination.offset+pagination.limit));const currentSearchParams=new URLSearchParams(window.location.search);const currentStartTime=currentSearchParams.get('start_time');const currentEndTime=currentSearchParams.get('end_time');const startInput=document.getElementById('start_time');const endInput=document.getElementById('end_time');if(startInput&&currentStartTime)startInput.value=localDatetimeFromISO(currentStartTime);if(endInput&&currentEndTime)endInput.value=localDatetimeFromISO(currentEndTime)} function localDatetimeFromISO(isoString){if(!isoString)return '';try{const date=new Date(isoString);if(isNaN(date.getTime()))return '';const offset=date.getTimezoneOffset()*60000;const localISOTime=(new Date(date.getTime()-offset)).toISOString().slice(0,16);return localISOTime}catch(e){console.error("Error parsing date for input:",e);return ''}} function isoStringFromLocalInput(elementId){const input=document.getElementById(elementId);if(!input||!input.value)return null;try{const localDate=new Date(input.value);if(isNaN(localDate.getTime()))return null;return localDate.toISOString()}catch(e){console.error("Error creating ISO string from input:",e);return null}} async function loadReadme(){const data=await fetchData('/api/readme');renderReadme(data)} async function loadAbout(){const data=await fetchData('/api/config');renderAbout(data)} async function loadRegistrations(){const data=await fetchData('/api/handlers');renderRegistrations(data)} async function loadSchedules(requestedOffset=0){const limitParam=new URLSearchParams(window.location.search).get('limit');const limit=parseInt(limitParam||'50',10);let offset=Math.max(0,requestedOffset);let startTimeISO=isoStringFromLocalInput('start_time');let endTimeISO=isoStringFromLocalInput('end_time');const params=new URLSearchParams(window.location.search);const navigatedFromOtherPage=!params.has('start_time')&&!params.has('end_time')&&!document.getElementById('start_time');if(navigatedFromOtherPage&&!startTimeISO&&!endTimeISO){const now=new Date();const nextWeek=new Date(now.getTime()+7*24*60*60*1000);startTimeISO=now.toISOString();endTimeISO=nextWeek.toISOString()} const url=new URL('/api/schedules',window.location.origin);url.searchParams.set('limit',limit);url.searchParams.set('offset',offset);if(startTimeISO)url.searchParams.set('start_time',startTimeISO);if(endTimeISO)url.searchParams.set('end_time',endTimeISO);const historyUrl=new URL(window.location);historyUrl.hash='#schedules';historyUrl.searchParams.set('limit',limit);historyUrl.searchParams.set('offset',offset);if(startTimeISO)historyUrl.searchParams.set('start_time',startTimeISO);else historyUrl.searchParams.delete('start_time');if(endTimeISO)historyUrl.searchParams.set('end_time',endTimeISO);else historyUrl.searchParams.delete('end_time');history.replaceState(null,'',historyUrl);const data=await fetchData(url.toString());renderSchedules(data)} function router(){const hash=window.location.hash||'#readme';setActiveLink(hash);switch(hash){case'#readme':loadReadme();break;case'#about':loadAbout();break;case'#registrations':loadRegistrations();break;case'#schedules':const params=new URLSearchParams(window.location.search);const offset=parseInt(params.get('offset')||'0',10);loadSchedules(offset);break;default:contentEl.innerHTML='<p>Page not found.</p>';setActiveLink('')}} window.addEventListener('hashchange',router);window.addEventListener('load',router); </script></body></html>
+    

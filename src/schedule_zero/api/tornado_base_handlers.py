@@ -125,9 +125,11 @@ class IndexHandler(tornado.web.RequestHandler):
         description = self.config.get('description', 'N/A')
         version = self.config.get('version', 'N/A')
         admin_contact = self.config.get('admin_contact', 'N/A')
+        title = self.config.get('title', 'ScheduleZero')
         
         self.render(
             "index.html",
+            title=title,
             instance_name=instance_name,
             description=description,
             version=version,

@@ -1,0 +1,49 @@
+site_name: ScheduleZero Documentation
+site_description: Dynamic job scheduling with ZMQ handlers
+
+plugins:
+  - search
+  - tags
+
+theme:
+  name: material
+  palette:
+    scheme: slate
+    primary: indigo
+    accent: teal
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+    - search.suggest
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quickstart.md
+  - Core Concepts:
+    - Architecture: concepts/architecture.md
+    - Handlers: concepts/handlers.md
+    - Scheduling: concepts/scheduling.md
+  - Deployment:
+    - Overview: deployment/overview.md
+    - Single Server: deployment/single-server.md
+  - API Reference:
+    - REST API: api/rest.md
+    - Handler API: api/handlers.md
+  - Examples:
+    - Discord Bot: examples/discord.md
+
+docs_dir: docs_site
+site_dir: docs_site_build
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true

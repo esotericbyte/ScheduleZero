@@ -1,0 +1,58 @@
+2025-11-03 01:58:07.098 [INFO] root - Logging initialized at INFO level
+2025-11-03 01:58:07.098 [INFO] root - Logging to file: logs\handlers\ding-dong-handler\handler.log
+2025-11-03 01:58:07.101 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-dong-handler.__init__] [zmq_handler_base.py:83:__init__] Initialized with methods: ['announce_time', 'clear_log', 'get_chime_log', 'play_hour_bongs', 'play_quarter_chime', 'ping']
+2025-11-03 01:58:07.449 [INFO] comtypes.client._code_cache - Imported existing <module 'comtypes.gen' from 'C:\\pypo\\schedule-zero-RMwcuXLV-py3.12\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-11-03 01:58:07.450 [INFO] comtypes.client._code_cache - Using writeable comtypes cache directory: 'C:\pypo\schedule-zero-RMwcuXLV-py3.12\Lib\site-packages\comtypes\gen'
+2025-11-03 01:58:07.695 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-dong-handler.main] [ding_dong_handler.py:322:main] Starting in DEPLOYMENT mode
+2025-11-03 01:58:07.695 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-dong-handler.main] [ding_dong_handler.py:323:main] Handler address: tcp://127.0.0.1:4245
+2025-11-03 01:58:07.695 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-dong-handler.main] [ding_dong_handler.py:324:main] Server address: tcp://127.0.0.1:4243
+2025-11-03 01:58:07.695 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-dong-handler.main] [ding_dong_handler.py:325:main] Log directory: ding_dong_logs/
+2025-11-03 01:58:07.695 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-dong-handler.main] [ding_dong_handler.py:326:main] Ready to BONG on the hour and chime on the quarters!
+2025-11-03 01:58:07.695 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-dong-handler] [zmq_handler_base.py:371:start] Starting handler 'ding-dong-handler'...
+2025-11-03 01:58:07.725 [ERROR] schedule_zero.zmq_handler_base - [Handler.ding-dong-handler._run_handler_server] [zmq_handler_base.py:205:_run_handler_server] (address=tcp://127.0.0.1:4245) Failed to run handler server: Address in use (addr='tcp://127.0.0.1:4245')
+Traceback (most recent call last):
+  File "C:\Users\johnl\windev\schedule-zero\src\schedule_zero\zmq_handler_base.py", line 157, in _run_handler_server
+    self.handler_socket.bind(bind_address)
+  File "C:\pypo\schedule-zero-RMwcuXLV-py3.12\Lib\site-packages\zmq\sugar\socket.py", line 320, in bind
+    super().bind(addr)
+  File "zmq/backend/cython/_zmq.py", line 1009, in zmq.backend.cython._zmq.Socket.bind
+    _check_rc(rc)
+    ^^^^^^^^^^^
+  File "zmq/backend/cython/_zmq.py", line 190, in zmq.backend.cython._zmq._check_rc
+    raise ZMQError(errno)
+    ^^^^^^^^^^^
+zmq.error.ZMQError: Address in use (addr='tcp://127.0.0.1:4245')
+2025-11-03 01:58:07.757 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-dong-handler._run_handler_server] [zmq_handler_base.py:208:_run_handler_server] Handler server shutting down
+2025-11-03 01:58:08.220 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-dong-handler] [zmq_handler_base.py:384:start] Handler 'ding-dong-handler' started
+2025-11-03 01:58:09.224 [ERROR] schedule_zero.zmq_handler_base - [Handler.ding-dong-handler._manage_registration] [zmq_handler_base.py:224:_manage_registration] Handler server failed to bind within timeout
+2025-11-03 02:00:54.367 [INFO] root - Logging initialized at INFO level
+2025-11-03 02:00:54.367 [INFO] root - Logging to file: logs\handlers\ding-dong-handler\handler.log
+2025-11-03 02:00:54.369 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-dong-handler.__init__] [zmq_handler_base.py:83:__init__] Initialized with methods: ['announce_time', 'clear_log', 'get_chime_log', 'play_hour_bongs', 'play_quarter_chime', 'ping']
+2025-11-03 02:00:54.406 [INFO] comtypes.client._code_cache - Imported existing <module 'comtypes.gen' from 'C:\\pypo\\schedule-zero-RMwcuXLV-py3.12\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-11-03 02:00:54.406 [INFO] comtypes.client._code_cache - Using writeable comtypes cache directory: 'C:\pypo\schedule-zero-RMwcuXLV-py3.12\Lib\site-packages\comtypes\gen'
+2025-11-03 02:00:54.511 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-dong-handler.main] [ding_dong_handler.py:322:main] Starting in DEPLOYMENT mode
+2025-11-03 02:00:54.512 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-dong-handler.main] [ding_dong_handler.py:323:main] Handler address: tcp://127.0.0.1:4245
+2025-11-03 02:00:54.512 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-dong-handler.main] [ding_dong_handler.py:324:main] Server address: tcp://127.0.0.1:4243
+2025-11-03 02:00:54.512 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-dong-handler.main] [ding_dong_handler.py:325:main] Log directory: ding_dong_logs/
+2025-11-03 02:00:54.512 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-dong-handler.main] [ding_dong_handler.py:326:main] Ready to BONG on the hour and chime on the quarters!
+2025-11-03 02:00:54.512 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-dong-handler] [zmq_handler_base.py:371:start] Starting handler 'ding-dong-handler'...
+2025-11-03 02:00:54.521 [ERROR] schedule_zero.zmq_handler_base - [Handler.ding-dong-handler._run_handler_server] [zmq_handler_base.py:205:_run_handler_server] (address=tcp://127.0.0.1:4245) Failed to run handler server: Address in use (addr='tcp://127.0.0.1:4245')
+Traceback (most recent call last):
+  File "C:\Users\johnl\windev\schedule-zero\src\schedule_zero\zmq_handler_base.py", line 157, in _run_handler_server
+    self.handler_socket.bind(bind_address)
+  File "C:\pypo\schedule-zero-RMwcuXLV-py3.12\Lib\site-packages\zmq\sugar\socket.py", line 320, in bind
+    super().bind(addr)
+  File "zmq/backend/cython/_zmq.py", line 1009, in zmq.backend.cython._zmq.Socket.bind
+    _check_rc(rc)
+    ^^^^^^^^^^^
+  File "zmq/backend/cython/_zmq.py", line 190, in zmq.backend.cython._zmq._check_rc
+    raise ZMQError(errno)
+    ^^^^^^^^^^^
+zmq.error.ZMQError: Address in use (addr='tcp://127.0.0.1:4245')
+2025-11-03 02:00:54.522 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-dong-handler._run_handler_server] [zmq_handler_base.py:208:_run_handler_server] Handler server shutting down
+2025-11-03 02:00:55.021 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-dong-handler] [zmq_handler_base.py:384:start] Handler 'ding-dong-handler' started
+2025-11-03 02:00:56.024 [ERROR] schedule_zero.zmq_handler_base - [Handler.ding-dong-handler._manage_registration] [zmq_handler_base.py:224:_manage_registration] Handler server failed to bind within timeout
+2025-11-09 18:29:17.655 [INFO] root - Logging initialized at INFO level
+2025-11-09 18:29:17.655 [INFO] root - Logging to file: logs\handlers\ding-dong-handler\handler.log
+2025-11-09 18:29:40.460 [INFO] root - Logging initialized at INFO level
+2025-11-09 18:29:40.460 [INFO] root - Logging to file: logs\handlers\ding-dong-handler\handler.log

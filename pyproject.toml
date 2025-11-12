@@ -6,7 +6,7 @@ authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<4.0"
 dependencies = ["tornado (>=6.5.2,<7.0.0)", "sqlalchemy (>=2.0.44,<3.0.0)", "pyzmq (>=27.1.0,<28.0.0)", "pyyaml (>=6.0.3,<7.0.0)", "python-dateutil (>=2.9.0.post0,<3.0.0)", "apscheduler (==4.0.0a5)", "aiosqlite (>=0.21.0,<0.22.0)", "pyttsx3 (>=2.99,<3.0)"]
 
 [tool.poetry]

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⏰ ScheduleZero - Dashboard</title>
+    <link rel="stylesheet" href="/static/main.css">
+</head>
+<body data-theme="light">
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="logo">
+                <span>⏰</span>
+                <span>ScheduleZero</span>
+            </div>
+            <div class="navbar-controls">
+                <button class="theme-toggle" onclick="toggleTheme()" id="theme-toggle">
+                    <span id="theme-icon">🌙</span>
+                    <span id="theme-text">Dark</span>
+                </button>
+                <div class="status-badge" id="status-badge">● CHECKING</div>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div class="hero">
+            <h1>⏰ ScheduleZero Dashboard</h1>
+            <p>Lightweight Distributed Task Scheduling for Python</p>
+            
+            <div class="instance-info">
+                <h3>📋 Instance Information</h3>
+                <div class="instance-info-grid">
+                    <div class="instance-info-item">
+                        <span class="instance-info-label">Instance</span>
+                        <span class="instance-info-value">{{ instance_name }}</span>
+                    </div>
+                    <div class="instance-info-item">
+                        <span class="instance-info-label">Description</span>
+                        <span class="instance-info-value">{{ description }}</span>
+                    </div>
+                    <div class="instance-info-item">
+                        <span class="instance-info-label">Version</span>
+                        <span class="instance-info-value">{{ version }}</span>
+                    </div>
+                    <div class="instance-info-item">
+                        <span class="instance-info-label">Admin Contact</span>
+                        <span class="instance-info-value">{{ admin_contact }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+                <a href="/view/handlers" class="doc-link">🔌 View Handlers</a>
+                <a href="/view/schedules" class="doc-link">📅 View Schedules</a>
+                <a href="/api/health" class="doc-link secondary">❤️ Health Check</a>
+            </div>
+        </div>
+        
+        <div class="stats-grid" id="stats">
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <h3>Active Handlers</h3>
+                    <div class="stat-icon icon-blue">🔌</div>
+                </div>
+                <div class="stat-value" id="handler-count">-</div>
+                <div class="stat-change">Connected workers</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <h3>Scheduled Jobs</h3>
+                    <div class="stat-icon icon-green">📅</div>
+                </div>
+                <div class="stat-value" id="schedule-count">-</div>
+                <div class="stat-change">Pending execution</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <h3>Server Status</h3>
+                    <div class="stat-icon icon-purple">🚀</div>
+                </div>
+                <div class="stat-value" id="server-status">Running</div>
+                <div class="stat-change">All systems operational</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <h3>Uptime</h3>
+                    <div class="stat-icon icon-orange">⏱️</div>
+                </div>
+                <div class="stat-value" id="uptime">Active</div>
+                <div class="stat-change">Since last restart</div>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab-buttons">
+                <button class="tab-button active" onclick="switchTab('overview')">📊 Overview</button>
+                <button class="tab-button" onclick="switchTab('api')">🔌 API Reference</button>
+                <button class="tab-button" onclick="switchTab('docs')">📚 Documentation</button>
+                <button class="tab-button" onclick="switchTab('features')">✨ Features</button>
+            </div>
+            
+            <div id="overview" class="tab-content active">
+                <h2 style="margin-bottom: 1rem;">🎯 Welcome to ScheduleZero</h2>
+                <p style="line-height: 1.6; margin-bottom: 1.5rem; opacity: 0.8;">
+                    ScheduleZero is a resource-conscious, distributed task scheduling system built entirely in Python.
+                    Perfect for scenarios where heavyweight solutions like Celery are overkill—especially on
+                    memory-constrained systems like small VMs or edge devices.
+                </p>
+                
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h3>🪶 Lightweight</h3>
+                        <p>No message broker required (RabbitMQ/Redis). Minimal memory footprint perfect for edge devices.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h3>🚀 Fast</h3>
+                        <p>Built on modern async Python (asyncio, Tornado) for high-performance task execution.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h3>🔄 Distributed</h3>
+                        <p>Scale horizontally by adding worker handlers. Each handler self-registers automatically.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h3>💾 Persistent</h3>
+                        <p>SQLite-based job storage ensures your schedules survive server restarts.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h3>🎨 Beautiful</h3>
+                        <p>Modern web interface for monitoring and controlling your distributed task scheduler.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h3>🛡️ Reliable</h3>
+                        <p>Built-in retry logic with exponential backoff ensures job execution resilience.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="api" class="tab-content">
+                <h2 style="margin-bottom: 1rem;">🔌 API Endpoints</h2>
+                <ul class="api-list">
+                    <li class="api-item">
+                        <span class="api-method method-get">GET</span>
+                        <span class="api-path">/api/handlers</span>
+                        <div class="api-desc">List all registered handlers with their status and available methods</div>
+                    </li>
+                    
+                    <li class="api-item">
+                        <span class="api-method method-get">GET</span>
+                        <span class="api-path">/api/schedules</span>
+                        <div class="api-desc">List all scheduled jobs with next fire times and trigger details</div>
+                    </li>
+                    
+                    <li class="api-item">
+                        <span class="api-method method-post">POST</span>
+                        <span class="api-path">/api/schedule</span>
+                        <div class="api-desc">Schedule a new job with date, interval, or cron triggers</div>
+                    </li>
+                    
+                    <li class="api-item">
+                        <span class="api-method method-post">POST</span>
+                        <span class="api-path">/api/run_now</span>
+                        <div class="api-desc">Execute a job immediately without scheduling</div>
+                    </li>
+                    
+                    <li class="api-item">
+                        <span class="api-method method-get">GET</span>
+                        <span class="api-path">/api/config</span>
+                        <div class="api-desc">Get current server configuration from config.yaml</div>
+                    </li>
+                    
+                    <li class="api-item">
+                        <span class="api-method method-get">GET</span>
+                        <span class="api-path">/api/health</span>
+                        <div class="api-desc">Health check endpoint for monitoring and load balancers</div>
+                    </li>
+                </ul>
+            </div>
+            
+            <div id="docs" class="tab-content">
+                <h2 style="margin-bottom: 1rem;">📚 Documentation</h2>
+                <p style="opacity: 0.8; margin-bottom: 2rem;">
+                    Comprehensive documentation for understanding and extending ScheduleZero.
+                </p>
+                
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="margin-bottom: 1rem;">📖 Core Documentation</h3>
+                    <a href="/readme" class="doc-link">📄 Main README</a>
+                    <div style="opacity: 0.7; margin-top: 0.5rem;">
+                        Complete architecture guide, component rationale, and getting started instructions.
+                    </div>
+                </div>
+                
+                <div style="background: var(--card-bg-secondary); padding: 1.5rem; border-radius: 0.75rem; border-left: 4px solid var(--primary);">
+                    <h4 style="margin-bottom: 0.5rem;">💡 Quick Links</h4>
+                    <ul style="list-style: none; opacity: 0.8;">
+                        <li style="margin-bottom: 0.5rem;">🏗️ <strong>Architecture:</strong> Tornado + APScheduler 4.x + zerorpc + SQLite</li>
+                        <li style="margin-bottom: 0.5rem;">🔌 <strong>Ports:</strong> Web UI (8888), Registration (4242), Handlers (4243+)</li>
+                        <li style="margin-bottom: 0.5rem;">📦 <strong>Package Manager:</strong> Poetry</li>
+                        <li style="margin-bottom: 0.5rem;">🐍 <strong>Python Version:</strong> 3.12+</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div id="features" class="tab-content">
+                <h2 style="margin-bottom: 1rem;">✨ Feature Highlights</h2>
+                
+                <div style="background: var(--card-bg-secondary); padding: 1.5rem; border-radius: 0.75rem; margin-bottom: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">🕐 Flexible Scheduling</h3>
+                    <p style="opacity: 0.8; margin-bottom: 1rem;">
+                        Support for multiple trigger types powered by APScheduler 4.x:
+                    </p>
+                    <ul style="opacity: 0.8; margin-left: 1.5rem;">
+                        <li><strong>Date Triggers:</strong> Run once at a specific date/time</li>
+                        <li><strong>Interval Triggers:</strong> Repeat every N seconds/minutes/hours</li>
+                        <li><strong>Cron Triggers:</strong> Advanced scheduling with cron expressions</li>
+                    </ul>
+                </div>
+                
+                <div style="background: var(--card-bg-secondary); padding: 1.5rem; border-radius: 0.75rem; margin-bottom: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">📡 Remote Execution</h3>
+                    <p style="opacity: 0.8; margin-bottom: 1rem;">
+                        Distribute jobs across multiple handler processes using zerorpc:
+                    </p>
+                    <ul style="opacity: 0.8; margin-left: 1.5rem;">
+                        <li>Handlers self-register with the central server</li>
+                        <li>Method-level routing (call specific handler methods)</li>
+                        <li>Connection pooling with lazy initialization</li>
+                        <li>Automatic reconnection on failure</li>
+                    </ul>
+                </div>
+                
+                <div style="background: var(--card-bg-secondary); padding: 1.5rem; border-radius: 0.75rem; margin-bottom: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">💪 Resilience</h3>
+                    <p style="opacity: 0.8; margin-bottom: 1rem;">
+                        Built-in reliability features for production environments:
+                    </p>
+                    <ul style="opacity: 0.8; margin-left: 1.5rem;">
+                        <li>Exponential backoff with jitter for retries</li>
+                        <li>Thread-safe handler registry operations</li>
+                        <li>Graceful shutdown handling</li>
+                        <li>Job persistence across restarts</li>
+                    </ul>
+                </div>
+                
+                <div style="background: var(--card-bg-secondary); padding: 1.5rem; border-radius: 0.75rem;">
+                    <h3 style="margin-bottom: 1rem;">🎯 Developer Friendly</h3>
+                    <p style="opacity: 0.8; margin-bottom: 1rem;">
+                        Easy to extend and integrate:
+                    </p>
+                    <ul style="opacity: 0.8; margin-left: 1.5rem;">
+                        <li>Abstract base class for handler implementations</li>
+                        <li>RESTful HTTP API for integration</li>
+                        <li>YAML-based configuration</li>
+                        <li>Comprehensive documentation</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="footer-links">
+            <a href="https://github.com/yourusername/schedule-zero">GitHub</a>
+            <a href="/view/handlers">Handlers</a>
+            <a href="/readme">Docs</a>
+            <a href="/api/health">Status</a>
+        </div>
+        <p>Made with ❤️ and Python | ScheduleZero © 2025</p>
+    </footer>
+    
+    <script src="/static/main.js"></script>
+</body>
+</html>

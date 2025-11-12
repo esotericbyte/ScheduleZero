@@ -3,12 +3,15 @@ Centralized logging configuration for ScheduleZero.
 
 Provides consistent, structured logging across all components with:
 - Component/class/method context in every log
+- File, line number, and function name in every log
 - Configurable log levels per module
 - Performance tracing for frequent operations
 - No print() statements - 100% logging
 """
 import logging
 import sys
+import inspect
+from pathlib import Path
 from typing import Optional
 from collections import defaultdict
 from threading import Lock
@@ -39,22 +42,46 @@ class StructuredLogger:
         self._event_counters = defaultdict(int)
         self._counter_lock = Lock()
     
+    def _get_caller_info(self) -> tuple[str, int, str]:
+        """Get caller's file, line number, and function name."""
+        # Walk up the stack to find the actual caller (skip logger methods)
+        frame = inspect.currentframe()
+        try:
+            # Skip: _get_caller_info -> debug/info/error -> actual caller
+            caller_frame = frame.f_back.f_back.f_back
+            if caller_frame:
+                filename = Path(caller_frame.f_code.co_filename).name
+                lineno = caller_frame.f_lineno
+                funcname = caller_frame.f_code.co_name
+                return filename, lineno, funcname
+        finally:
+            del frame
+        return "unknown", 0, "unknown"
+    
     def _format_context(self, method: str = None, **kwargs) -> str:
-        """Build context prefix for log messages."""
+        """Build context prefix for log messages with file/line/function."""
+        # Get caller information
+        filename, lineno, funcname = self._get_caller_info()
+        
+        # Build component context
         parts = [self.component]
         if self.obj_id:
             parts.append(self.obj_id)
         if method:
             parts.append(method)
         
-        context = '.'.join(parts)
+        component_context = '.'.join(parts)
+        
+        # Format: [component.obj.method] [file.py:123:function_name]
+        file_context = f"[{filename}:{lineno}:{funcname}]"
+        full_context = f"[{component_context}] {file_context}"
         
         # Add any extra context as key=value pairs
         if kwargs:
             extras = ' '.join(f"{k}={v}" for k, v in kwargs.items())
-            return f"[{context}] ({extras})"
+            return f"{full_context} ({extras})"
         
-        return f"[{context}]"
+        return full_context
     
     def debug(self, msg: str, method: str = None, **kwargs):
         """Log debug message with context."""
@@ -116,13 +143,13 @@ def setup_logging(
         log_file: Optional file path to write logs to
         format_style: "standard" or "detailed" (includes timestamp, level, module)
     """
-    # Define formats
+    # Define formats with milliseconds and full context
     if format_style == "detailed":
-        log_format = "%(asctime)s - %(levelname)-8s - %(name)s - %(message)s"
+        log_format = "%(asctime)s.%(msecs)03d [%(levelname)s] %(name)s - %(message)s"
         date_format = "%Y-%m-%d %H:%M:%S"
     else:
-        log_format = "%(levelname)-8s - %(message)s"
-        date_format = None
+        log_format = "%(asctime)s.%(msecs)03d [%(levelname)s] - %(message)s"
+        date_format = "%H:%M:%S"
     
     # Configure root logger
     root_logger = logging.getLogger()
@@ -142,8 +169,9 @@ def setup_logging(
     if log_file:
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.DEBUG)  # Always log everything to file
+        # File logs get full context with milliseconds
         file_formatter = logging.Formatter(
-            "%(asctime)s - %(levelname)-8s - %(name)s:%(lineno)d - %(message)s",
+            "%(asctime)s.%(msecs)03d [%(levelname)s] %(name)s - %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S"
         )
         file_handler.setFormatter(file_formatter)

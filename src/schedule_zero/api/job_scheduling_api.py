@@ -1,5 +1,6 @@
 """Job scheduling API endpoints."""
 import dateutil.parser
+from datetime import datetime, timezone
 from apscheduler import ConflictingIdError, TaskLookupError
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.date import DateTrigger
@@ -61,16 +62,18 @@ class ScheduleJobHandler(BaseAPIHandler):
         
         # Add schedule to APScheduler
         try:
-            schedule_options = {
-                "id": job_id,
-                "args": [handler_id, job_method, job_params]
-            }
-            
-            if job_id is None:
-                del schedule_options["id"]
+            # Generate the schedule ID first if not provided
+            actual_job_id = job_id if job_id else f"{handler_id}_{job_method}_{datetime.now().timestamp()}"
             
             # Use the task_id instead of passing the callable directly
-            schedule_id = await scheduler.add_schedule("job_executor", trigger=trigger_obj, **schedule_options)
+            # Args must match JobExecutor.__call__ signature: handler_id, method_name, job_params, job_id
+            schedule_id = await scheduler.add_schedule(
+                "job_executor", 
+                trigger=trigger_obj,
+                args=[handler_id, job_method, job_params, actual_job_id],
+                id=actual_job_id
+            )
+            
             logger.info(f"Scheduled job via API: ID={schedule_id}, Handler={handler_id}, Method={job_method}")
             self.write_json({
                 "status": "success",
@@ -92,10 +95,24 @@ class ScheduleJobHandler(BaseAPIHandler):
         trigger_args = {k: v for k, v in trigger_config.items() if k != "type"}
         
         if trigger_type == "date":
-            run_date_str = trigger_args.get("run_date")
-            if not run_date_str:
+            run_date_value = trigger_args.get("run_date")
+            if not run_date_value:
                 raise ValueError("'run_date' is required for date trigger")
-            run_date = dateutil.parser.isoparse(run_date_str)
+            
+            # Accept both ISO string and Unix timestamp (float/int)
+            if isinstance(run_date_value, (int, float)):
+                # Unix timestamp (assume UTC)
+                run_date = datetime.fromtimestamp(run_date_value, tz=timezone.utc)
+                logger.debug("Parsed Unix timestamp for date trigger", method="_parse_trigger", 
+                           timestamp=run_date_value, datetime=run_date.isoformat())
+            elif isinstance(run_date_value, str):
+                # ISO format string
+                run_date = dateutil.parser.isoparse(run_date_value)
+                logger.debug("Parsed ISO string for date trigger", method="_parse_trigger", 
+                           iso_string=run_date_value)
+            else:
+                raise ValueError(f"'run_date' must be ISO string or Unix timestamp, got {type(run_date_value)}")
+            
             return DateTrigger(run_time=run_date)
         
         elif trigger_type == "interval":
@@ -149,7 +166,9 @@ class RunNowHandler(BaseAPIHandler):
         
         # Execute immediately
         try:
-            result = await job_executor(handler_id, job_method, job_params)
+            # Generate a unique ID for this immediate execution
+            immediate_job_id = f"immediate_{handler_id}_{job_method}_{datetime.now().timestamp()}"
+            result = await job_executor(immediate_job_id, handler_id, job_method, job_params)
             logger.info(f"Executed job immediately via API: Handler={handler_id}, Method={job_method}")
             self.write_json({
                 "status": "success",

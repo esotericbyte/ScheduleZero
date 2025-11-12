@@ -1,0 +1,18 @@
+2025-11-09 18:53:03.410 [INFO] root - Logging initialized at INFO level
+2025-11-09 18:53:03.410 [INFO] root - Logging to file: logs\handlers\ding-aling\handler.log
+2025-11-09 18:53:03.413 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-aling.__init__] [zmq_handler_base.py:83:__init__] Initialized with methods: ['counter_test', 'double_aling', 'get_supported_methods', 'quick_aling', 'test_sequence', 'triple_aling', 'visual_ping', 'ping']
+2025-11-09 18:53:03.413 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-aling] [zmq_handler_base.py:371:start] Starting handler 'ding-aling'...
+2025-11-09 18:53:03.423 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-aling._run_handler_server] [zmq_handler_base.py:162:_run_handler_server] (address=tcp://127.0.0.1:4247 note=configured port) Handler server listening
+2025-11-09 18:53:03.924 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-aling._manage_registration] [zmq_handler_base.py:228:_manage_registration] (address=tcp://127.0.0.1:4247) Handler bound to address, starting registration
+2025-11-09 18:53:03.924 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-aling] [zmq_handler_base.py:384:start] Handler 'ding-aling' started
+2025-11-09 18:53:03.924 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-aling] [zmq_handler_base.py:238:_manage_registration] Attempting to connect to server at tcp://127.0.0.1:4243... (attempt 1/5)
+2025-11-09 18:53:13.935 [WARNING] schedule_zero.zmq_handler_base - [Handler.ding-aling] [zmq_handler_base.py:258:_manage_registration] Failed to connect to server: Resource temporarily unavailable. Retrying in 15s... (attempt 1/5)
+2025-11-09 18:53:28.940 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-aling] [zmq_handler_base.py:238:_manage_registration] Attempting to connect to server at tcp://127.0.0.1:4243... (attempt 2/5)
+2025-11-09 18:53:38.950 [WARNING] schedule_zero.zmq_handler_base - [Handler.ding-aling] [zmq_handler_base.py:258:_manage_registration] Failed to connect to server: Resource temporarily unavailable. Retrying in 15s... (attempt 2/5)
+2025-11-09 18:53:53.966 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-aling] [zmq_handler_base.py:238:_manage_registration] Attempting to connect to server at tcp://127.0.0.1:4243... (attempt 3/5)
+2025-11-09 18:54:03.993 [WARNING] schedule_zero.zmq_handler_base - [Handler.ding-aling] [zmq_handler_base.py:258:_manage_registration] Failed to connect to server: Resource temporarily unavailable. Retrying in 15s... (attempt 3/5)
+2025-11-09 18:54:19.005 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-aling] [zmq_handler_base.py:238:_manage_registration] Attempting to connect to server at tcp://127.0.0.1:4243... (attempt 4/5)
+2025-11-09 18:54:29.017 [WARNING] schedule_zero.zmq_handler_base - [Handler.ding-aling] [zmq_handler_base.py:258:_manage_registration] Failed to connect to server: Resource temporarily unavailable. Retrying in 15s... (attempt 4/5)
+2025-11-09 18:54:44.019 [INFO] schedule_zero.zmq_handler_base - [Handler.ding-aling] [zmq_handler_base.py:238:_manage_registration] Attempting to connect to server at tcp://127.0.0.1:4243... (attempt 5/5)
+2025-11-09 18:54:54.022 [WARNING] schedule_zero.zmq_handler_base - [Handler.ding-aling] [zmq_handler_base.py:258:_manage_registration] Failed to connect to server: Resource temporarily unavailable. Retrying in 15s... (attempt 5/5)
+2025-11-09 18:54:54.022 [ERROR] schedule_zero.zmq_handler_base - [Handler.ding-aling] [zmq_handler_base.py:266:_manage_registration] Max retries (5) reached. Giving up.

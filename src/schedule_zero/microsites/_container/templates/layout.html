@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ScheduleZero{% end %}</title>
+    
+    <!-- Container CSS -->
+    <link rel="stylesheet" href="/static/_container/css/layout.css">
+    
+    <!-- Microsite-specific CSS -->
+    {% block microsite_css %}{% end %}
+    
+    <!-- HTMX -->
+    <script src="/static/_container/js/htmx.min.js"></script>
+    
+    <!-- Container Web Components -->
+    <script src="/static/_container/js/components/sz-nav.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <sz-nav active="{{ active_site }}">
+        <nav-item href="/dash" icon="📊" name="dash">Dashboard</nav-item>
+        <nav-item href="/schedules" icon="📅" name="schedules">Schedules</nav-item>
+        <nav-item href="/handlers" icon="🔌" name="handlers">Handlers</nav-item>
+        <nav-item href="/docs" icon="📖" name="docs">Docs</nav-item>
+    </sz-nav>
+    
+    <!-- Main Content Area -->
+    <main id="content" class="microsite-content">
+        {% block content %}{% end %}
+    </main>
+    
+    <!-- Microsite-specific JS -->
+    {% block microsite_js %}{% end %}
+</body>
+</html>

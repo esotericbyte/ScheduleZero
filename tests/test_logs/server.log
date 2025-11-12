@@ -1,0 +1,25 @@
+2025-10-28 07:23:18 - INFO     - root - Logging initialized at INFO level
+
+================================================================================
+  ScheduleZero Deployment: DEFAULT
+================================================================================
+Web Server:       http://127.0.0.1:8888
+ZMQ Server:       tcp://127.0.0.1:4242
+Database:         schedulezero_jobs.db
+Registry:         handler_registry.yaml
+Log Level:        INFO
+Log File:         Console only
+================================================================================
+
+2025-10-28 07:23:18 - INFO     - schedule_zero.tornado_app_server - [TornadoServer.start_server] Starting ScheduleZero Server
+2025-10-28 07:23:18 - INFO     - schedule_zero.app_configuration - Loaded config from config.yaml
+2025-10-28 07:23:18 - INFO     - schedule_zero.handler_registry - [HandlerRegistry.load] (path=handler_registry.yaml count=1) Registry loaded
+2025-10-28 07:23:18 - INFO     - schedule_zero.tornado_app_server - [TornadoServer.start_server] Using database: sqlite+aiosqlite:///schedulezero_jobs.db
+2025-10-28 07:23:18 - INFO     - schedule_zero.zmq_registration_server - [ZMQRegistrationServer.start] (address=tcp://127.0.0.1:4242) Starting ZMQ server task
+2025-10-28 07:23:18 - INFO     - schedule_zero.zmq_registration_server - [ZMQRegistrationServer._run_server] (address=tcp://127.0.0.1:4242) ZMQ server listening
+C:\pypo\schedule-zero-RMwcuXLV-py3.12\Lib\site-packages\zmq\_future.py:718: RuntimeWarning: Proactor event loop does not implement add_reader family of methods required for zmq. Registering an additional selector thread for add_reader support via tornado. Use `asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())` to avoid this warning.
+  self._get_loop()
+2025-10-28 07:23:18 - INFO     - apscheduler._schedulers.async_ - Scheduler started
+2025-10-28 07:23:18 - INFO     - schedule_zero.tornado_app_server - [TornadoServer.start_server] APScheduler started with persistent data store
+2025-10-28 07:23:18 - INFO     - schedule_zero.tornado_app_server - [TornadoServer.start_server] (address=127.0.0.1 port=8888) Tornado server ready
+2025-10-28 07:23:18 - INFO     - apscheduler._schedulers.async_ - Cleaned up expired job results and finished schedules
