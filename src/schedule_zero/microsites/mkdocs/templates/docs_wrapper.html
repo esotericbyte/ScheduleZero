@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+
+{% block title %}Documentation - ScheduleZero{% end %}
+
+{% block content %}
+<div class="docs-wrapper">
+    <iframe 
+        id="docs-iframe"
+        src="/docs-content/{{ iframe_path }}"
+        title="ScheduleZero Documentation"
+        frameborder="0">
+    </iframe>
+</div>
+
+<style>
+.docs-wrapper {
+    /* Remove default content padding */
+    margin: -2rem;
+    height: calc(100vh - 2rem);
+    overflow: hidden;
+}
+
+#docs-iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+</style>
+{% end %}

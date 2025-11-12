@@ -59,6 +59,7 @@ logger = get_logger(__name__, component="TornadoServer")
 
 # Register microsites
 from .microsites import sz_dash
+from .microsites import mkdocs
 
 microsite_path = os.path.join(os.path.dirname(__file__), 'microsites')
 microsite_registry.register(Microsite(
@@ -67,6 +68,14 @@ microsite_registry.register(Microsite(
     routes=sz_dash.routes.routes,
     assets_path=os.path.join(microsite_path, 'sz_dash', 'assets'),
     templates_path=os.path.join(microsite_path, 'sz_dash', 'templates')
+))
+
+microsite_registry.register(Microsite(
+    name="Documentation",
+    url_prefix="/docs",
+    routes=mkdocs.routes.routes,
+    assets_path=os.path.join(microsite_path, 'mkdocs'),  # No assets for mkdocs microsite
+    templates_path=os.path.join(microsite_path, 'mkdocs')  # No templates needed (static docs)
 ))
 
 
@@ -160,12 +169,11 @@ def make_tornado_app(config, registry_manager, scheduler, job_executor, executio
         (r"/api/executions/errors", JobExecutionErrorsHandler, execution_log_deps),
         (r"/api/executions/clear", JobExecutionClearHandler, execution_log_deps),
         
-        # Documentation (built mkdocs site)
-        (r"/docs$", DocsIndexHandler),  # Redirect /docs to /docs/
-        (r"/docs/(.*)", DocsHandler, {'docs_path': docs_build_path}),
+        # MkDocs content (served in iframe) - must come before microsite routes
+        (r"/docs-content/(.*)", mkdocs.routes.DocsContentHandler),
     ]
     
-    # Add microsite routes and static handlers
+    # Add microsite routes and static handlers (includes /docs wrapper)
     routes.extend(microsite_registry.get_all_handlers())
     
     # Get all template paths (portal + microsites)

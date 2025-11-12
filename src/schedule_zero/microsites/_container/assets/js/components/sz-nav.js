@@ -27,15 +27,25 @@ class SzNav extends HTMLElement {
             const href = item.getAttribute('href');
             const icon = item.getAttribute('icon');
             const name = item.getAttribute('name');
+            const target = item.getAttribute('target'); // External link support
             const label = item.textContent.trim();
             
             const link = document.createElement('a');
             link.href = href;
             link.className = `nav-item ${name === active ? 'active' : ''}`;
-            link.setAttribute('hx-get', href);
-            link.setAttribute('hx-target', '#content');
-            link.setAttribute('hx-push-url', 'true');
-            link.setAttribute('hx-swap', 'innerHTML transition:true');
+            
+            // External links (target="_blank") don't use HTMX
+            if (target === '_blank') {
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+            } else {
+                // Internal links use HTMX for SPA-like navigation
+                link.setAttribute('hx-get', href);
+                link.setAttribute('hx-target', '#content');
+                link.setAttribute('hx-push-url', 'true');
+                link.setAttribute('hx-swap', 'innerHTML transition:true');
+            }
+            
             link.innerHTML = `
                 <span class="nav-icon">${icon}</span>
                 <span class="nav-label">${label}</span>
@@ -109,6 +119,14 @@ class SzNav extends HTMLElement {
             sz-nav .nav-item.active {
                 background: var(--sz-primary);
                 color: white;
+            }
+            
+            sz-nav .nav-item[target="_blank"] {
+                opacity: 0.8;
+            }
+            
+            sz-nav .nav-item[target="_blank"]:hover {
+                opacity: 1;
             }
             
             sz-nav .nav-icon {
