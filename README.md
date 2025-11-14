@@ -33,17 +33,14 @@
 
 ## ⚠️ Project Status
 
-**ScheduleZero is in early development and depends on pre-release software.**
+**ScheduleZero is in early development (Alpha stage)**
 
-- **Core Engine**: Built on [APScheduler 4.0](https://github.com/agronholm/apscheduler) (pre-release)
-- **Development Stage**: Alpha - features subject to change
-- **Testing**: Coverage mapping and verification in progress
-- **Upstream Contributions**: Planning to contribute back to APScheduler project
-- **Production Use**: Not recommended for critical workloads yet
+- **Core**: Built on [APScheduler 4.0](https://github.com/agronholm/apscheduler) (pre-release)
+- **Security**: ⚠️ **No authentication/authorization** - See [SECURITY_AND_NETWORKING.md](docs/SECURITY_AND_NETWORKING.md)
+- **Production**: Not recommended yet - authentication required for public deployment
+- **Demo**: Coming soon (requires security implementation first)
 
-> 📝 **Note**: The feature profile differs from traditional APScheduler projects—broader in some areas, more focused in others.
-
-<!-- TODO: Add link to working demo instance when deployed -->
+> � **Security Note**: Current implementation has no access control. Authentication & authorization are **top priority** for demo deployment. See security roadmap in docs.
 
 <!-- 
 ================================================================================
@@ -52,13 +49,13 @@
 ================================================================================
 -->
 
-**Why ScheduleZero? Target features include:**
-- 🪶 **Lightweight**: No message broker required (no RabbitMQ/Redis). Direct ZMQ communication.
-- 🚀 **Fast**: Built on modern async Python (asyncio, Tornado)
-- 🔄 **Distributed**: Separate process worker handlers with observability
-- 💾 **Persistent**: SQLite-based job storage (or PostgreSQL/MySQL via APScheduler)
-- 🎨 **Modern UI**: Microsite architecture with HTMX + Vuetify islands
-- 🛡️ **Reliable**: Built-in retry logic with exponential backoff + jitter
+**Why ScheduleZero?**
+- 🪶 **Lightweight**: No message broker (no RabbitMQ/Redis) - just ZeroMQ
+- 🚀 **Fast**: Modern async Python (asyncio, Tornado, APScheduler 4.x)
+- 🔄 **Distributed**: Separate process handlers with observability
+- 💾 **Flexible Storage**: SQLite (default) or PostgreSQL/MySQL
+- 🎨 **Modern UI**: HTMX + Vuetify islands architecture
+- 🛡️ **Resilient**: Automatic retries with exponential backoff
 ---
 
 <!-- 
@@ -68,45 +65,18 @@
 ================================================================================
 -->
 
-## ✨ Features
+## ✨ Key Features
 
-### Core Capabilities
-- **🕐 Flexible Scheduling**: Date, interval, and cron triggers via APScheduler 4.x
-- **📡 Remote Execution**: Distribute jobs across multiple handler processes via ZeroMQ
-- **🔄 Auto-Discovery**: Handlers self-register with the central server
-- **💪 Resilient**: Automatic retries with exponential backoff + jitter
-- **📊 REST API**: Full HTTP API for programmatic control
-- **💾 Persistent Storage**: Jobs survive restarts via SQLite (or PostgreSQL/MySQL)
-- **🔐 Thread-Safe**: Concurrent job execution with proper locking
- 
-### Advanced Features
-- **Dynamic Handler Registration**: Add/remove workers on-the-fly via ZMQ
-- **Method-Level Routing**: Route jobs to specific handler methods
-- **Status Tracking**: Monitor handler availability and job execution
-- **Execution Logging**: Complete job history with timing metrics and success/failure tracking
-- **Configuration Management**: YAML-based deployment configurations
-- **Multi-Deployment**: Support for dev, test, production, and custom deployments
-- **Graceful Shutdown**: Clean termination of all components
+- **🕐 Flexible Scheduling**: Date, interval, and cron triggers
+- **📡 ZMQ Communication**: Lightweight handler communication (see [networking options](docs/SECURITY_AND_NETWORKING.md#zmq-network-architecture--nat-traversal))
+- **🔄 Auto-Discovery**: Handlers self-register with central server
+- ** REST API**: Full HTTP API for programmatic control
+- **🎨 Modern Web UI**: Microsite architecture with HTMX + Vuetify ([see architecture](docs/FRONTEND_ARCHITECTURE.md))
+- **📖 Integrated Docs**: MkDocs Material embedded in UI
+- **📈 Execution Logging**: Complete job history with metrics
+- **🔧 Multi-Deployment**: Separate configs for dev/test/production
 
-### Web Interface (In Development)
-- **🏗️ Microsite Architecture**: Modular, extensible web interface
-- **⚡ HTMX-Powered**: Dynamic interactions without full page reloads
-- **🎨 Vuetify Islands**: Rich UI components for complex interactions (data grids, forms)
-- **📱 Responsive**: Works on desktop, tablet, and mobile
-- **📖 Integrated Docs**: MkDocs documentation embedded in the UI with ScheduleZero branding
-
-#### Microsites
-- **Dashboard** (`/dash`): Overview of schedules, handlers, and recent executions
-- **Schedules** (`/schedules`): Manage job schedules (create, edit, delete)
-- **Handlers** (`/handlers`): Monitor connected handlers and their health
-- **Documentation** (`/docs`): Complete MkDocs documentation with Material Design
-
-### Planned Integrations
-<!-- TODO: Document and link integrations after they are tested -->
-- Discord bot integration (examples available in `examples/discord_*.py`)
-- Prometheus metrics export
-- WebSocket support for real-time updates
-- More TBD after testing
+> � **Detailed documentation**: See [/docs](docs/) directory and web UI at `/docs`
 ---
 
 <!-- 
@@ -188,243 +158,59 @@ Open your browser to:
 
 ---
 
-<!-- 
-================================================================================
-  ARCHITECTURE OVERVIEW
-  Core: Tornado + APScheduler 4.x + ZMQ
-  Frontend: Microsite architecture with HTMX + Vuetify Islands
-================================================================================
--->
-
 ## 🏗️ Architecture
 
-### Component Overview
+**High-Level Overview:**
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│               ScheduleZero Central Server (port 8888)           │
-│                                                                   │
-│  ┌──────────────────┐  ┌──────────────┐  ┌──────────────────┐  │
-│  │   Tornado        │  │  APScheduler │  │   ZMQ            │  │
-│  │   Web Server     │──│   4.x Async  │──│   Registration   │  │
-│  │   + Microsites   │  │   Scheduler  │  │   Server :4242   │  │
-│  │   + REST API     │  │              │  │                  │  │
-│  └──────────────────┘  └──────────────┘  └──────────────────┘  │
-│         │                      │                    │            │
-│         │                      │                    │            │
-│    ┌────▼──────┐         ┌────▼──────┐       ┌────▼──────┐    │
-│    │ Microsite │         │  SQLite   │       │ Handler   │    │
-│    │ Registry  │         │  JobStore │       │ Registry  │    │
-│    │           │         │           │       │           │    │
-│    │ • dash    │         │ (or PG/   │       │ • Methods │    │
-│    │ • docs    │         │  MySQL)   │       │ • Ports   │    │
-│    │ • handlers│         │           │       │ • Status  │    │
-│    └───────────┘         └───────────┘       └───────────┘    │
-└─────────────────────────────────────────────────────────────────┘
-                                  │
-                                  │  ZeroMQ (tcp)
-                                  │  Request/Reply Pattern
-                ┌─────────────────┴─────────────────┐
-                │                                   │
-                ▼                                   ▼
-        ┌───────────────┐                   ┌───────────────┐
-        │   Handler 1   │                   │   Handler 2   │
-        │   :5001       │                   │   :5002       │
-        │               │                   │               │
-        │  • do_work()  │                   │  • process()  │
-        │  • backup()   │                   │  • analyze()  │
-        │  • status()   │                   │  • report()   │
-        └───────────────┘                   └───────────────┘
+┌──────────────────────────────────────┐
+│  ScheduleZero Server (:8888)         │
+│  • Tornado (Web + API)               │
+│  • APScheduler 4.x (Jobs)            │
+│  • ZMQ Server (:4242)                │
+│  • SQLite/PostgreSQL (Storage)       │
+└──────────────────────────────────────┘
+              │
+              │ ZeroMQ (tcp)
+              │
+    ┌─────────┴────────┐
+    ▼                  ▼
+┌─────────┐      ┌─────────┐
+│Handler 1│      │Handler 2│
+│ :5001   │      │ :5002   │
+└─────────┘      └─────────┘
 ```
 
-### Frontend Architecture (HTMX + Islands)
+**Tech Stack:**
+- **Backend**: Tornado (async web), APScheduler 4.x (scheduling), ZeroMQ (RPC)
+- **Frontend**: HTMX 2.0 (interactions), Vuetify 3 (data grids), Vanilla JS (simple components)
+- **Storage**: SQLite (default) or PostgreSQL/MySQL
+- **Docs**: MkDocs Material (integrated at `/docs`)
 
-```
-┌─────────────────────────────────────────────────────────┐
-│              Microsite Container (_container)           │
-│  • Common layout, navigation (sz-nav web component)     │
-│  • HTMX for SPA-like navigation                        │
-│  • Shared CSS (brand colors, fonts)                    │
-└─────────────────────────────────────────────────────────┘
-                      │
-        ┌─────────────┼─────────────┬─────────────┐
-        │             │             │             │
-        ▼             ▼             ▼             ▼
-   ┌────────┐   ┌─────────┐   ┌─────────┐   ┌──────┐
-   │  dash  │   │schedules│   │handlers │   │ docs │
-   │        │   │         │   │         │   │      │
-   │Server- │   │Vuetify  │   │Vuetify  │   │MkDocs│
-   │rendered│   │islands  │   │islands  │   │+HTMX │
-   │HTML +  │   │for data │   │for grids│   │      │
-   │HTMX    │   │grids    │   │         │   │iframe│
-   └────────┘   └─────────┘   └─────────┘   └──────┘
-
-Islands (JavaScript Components):
-  • Vanilla JS (~20 LOC): connection-status, copy-button, sz-flash
-  • Vuetify: schedule-grid, handler-grid, execution-log-grid
-  • Built separately with Vite, copied as .min.js assets
-```
-
-### Technology Stack
-
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| **Web Framework** | Tornado 6.5+ | Async web server & HTTP API |
-| **Scheduler** | APScheduler 4.x | Job scheduling & execution |
-| **RPC Layer** | ZeroMQ (pyzmq) | Lightweight, brokerless communication |
-| **Persistence** | SQLite + SQLAlchemy | Job storage & retrieval |
-| **Transport** | ZeroMQ REQ/REP | High-performance messaging pattern |
-| **Serialization** | JSON | Human-readable job data |
-| **Configuration** | PyYAML | Human-readable config files |
-| **Frontend** | HTMX 2.0 | Declarative interactivity |
-| **UI Components** | Vuetify 3 | Material Design components (islands) |
-| **Documentation** | MkDocs Material | Integrated documentation |
-
-### Why These Choices?
-
-#### 🌪️ **Tornado**
-- Native `asyncio` support for APScheduler 4.x integration
-- Efficient async I/O for handling many connections
-- Built-in web server—no external dependencies
-- Easy microsite architecture with route handlers
-
-#### 📅 **APScheduler 4.x**
-- Modern async-first design
-- Flexible trigger types (date, interval, cron)
-- Persistent job storage with datastore abstraction
-- Event-driven architecture for monitoring
-
-#### 🔌 **ZeroMQ (Not zerorpc)**
-- **No message broker required** (unlike Celery with RabbitMQ/Redis)
-- Minimal memory footprint (< 1MB typical)
-- Request/Reply pattern for RPC-style communication
-- Built-in connection management and reconnection
-- Battle-tested, used by financial systems and HPC
-
-#### 💾 **SQLite (Default)**
-- Zero configuration database
-- Low memory usage (< 1MB typical)
-- Perfect for embedded/edge deployments
-- ACID transactions for reliability
-- Can upgrade to PostgreSQL/MySQL for production
-
-#### ⚡ **HTMX + Islands Architecture**
-- **No build step for main app** - HTMX is a 14KB script
-- Progressive enhancement - works without JavaScript
-- **Islands for complex UI** - Only load Vuetify where needed
-- Separate build for islands (`schedulezero-islands` repo)
-- Fast initial page loads, rich interactivity where needed
+> 📚 **Detailed Architecture**:
+> - [Frontend Architecture](docs/FRONTEND_ARCHITECTURE.md) - Microsite + HTMX + Islands pattern
+> - [Security & Networking](docs/SECURITY_AND_NETWORKING.md) - Auth, NAT traversal, ZMQ patterns
+> - [Component Specs](docs/COMPONENT_SPECS.md) - Web component specifications
 
 ---
 
-<!-- 
-================================================================================
-  DOCUMENTATION & PROJECT STRUCTURE
-================================================================================
--->
-
 ## 📖 Documentation
 
-### Project Structure
+### Quick Links
+- **[API Reference](#-api-reference)** - REST API endpoints (below)
+- **[Frontend Architecture](docs/FRONTEND_ARCHITECTURE.md)** - Microsite + HTMX + Islands
+- **[Security & Networking](docs/SECURITY_AND_NETWORKING.md)** - Authentication roadmap, NAT traversal, ZMQ patterns
+- **[Deployment Guide](DEPLOYMENT_GUIDE.md)** - Multi-deployment configurations
+- **[Testing Status](TESTING_STATUS.md)** - Current test coverage and known issues
+- **[Discord Integration](examples/DISCORD_INTEGRATION.md)** - Bot integration examples
+- **Web Docs**: Start server and visit http://localhost:8888/docs
 
-```
-schedule-zero/
-├── src/schedule_zero/
-│   ├── tornado_app_server.py         # Main server entry point
-│   ├── app_configuration.py          # App config & environment vars
-│   ├── deployment_config.py          # Multi-deployment support
-│   ├── handler_registry.py           # Handler registration & clients
-│   ├── job_executor.py               # Job execution with retries
-│   ├── job_execution_log.py          # Execution history tracking
-│   ├── zmq_registration_server.py    # ZMQ server for handler registration
-│   ├── zmq_handler_base.py           # Base class for ZMQ handlers
-│   ├── zmq_client.py                 # ZMQ client for job execution
-│   │
-│   ├── api/                          # REST API endpoints
-│   │   ├── job_scheduling_api.py     # Schedule/run job endpoints
-│   │   ├── handler_list_api.py       # Handler listing endpoints
-│   │   ├── job_execution_log_api.py  # Execution history endpoints
-│   │   ├── remove_schedule_api.py    # Schedule deletion endpoint
-│   │   └── config_api.py             # Configuration endpoint
-│   │
-│   ├── microsites/                   # Web UI microsites
-│   │   ├── __init__.py               # Microsite registry
-│   │   ├── _container/               # Shared layout & components
-│   │   │   ├── templates/
-│   │   │   │   └── layout.html       # Master layout with navigation
-│   │   │   └── assets/
-│   │   │       ├── css/layout.css    # Brand colors, fonts
-│   │   │       └── js/
-│   │   │           ├── htmx.min.js   # HTMX 2.0
-│   │   │           └── components/
-│   │   │               └── sz-nav.js # Navigation web component
-│   │   │
-│   │   ├── sz_dash/                  # Dashboard microsite
-│   │   │   ├── routes.py
-│   │   │   └── templates/
-│   │   │
-│   │   ├── mkdocs/                   # Documentation microsite
-│   │   │   ├── routes.py
-│   │   │   └── templates/
-│   │   │       └── docs_wrapper.html # MkDocs iframe wrapper
-│   │   │
-│   │   └── (sz_schedules, sz_handlers - planned)
-│   │
-│   └── handlers/                     # Handler implementations
-│       ├── zmq_handler_base.py       # Abstract base class
-│       └── handler_example.py        # Example handler
-│
-├── docs_site/                        # MkDocs documentation source
-│   ├── index.md                      # Documentation homepage
-│   ├── getting-started/
-│   ├── concepts/
-│   ├── deployment/
-│   ├── api/
-│   ├── examples/
-│   ├── assets/
-│   │   └── logo.svg                  # ScheduleZero logo
-│   └── stylesheets/
-│       └── extra.css                 # Custom Material Design styling
-│
-├── docs_site_build/                  # Built MkDocs HTML (served at /docs-content/*)
-├── examples/                         # Integration examples
-│   ├── discord_handler.py            # Discord bot with asyncio handler
-│   ├── discord_handler_threaded.py   # Discord bot with threaded handler
-│   ├── discord_bot_with_cogs.py      # Discord bot with cog architecture
-│   └── cogs/
-│       ├── schedulezero_cog.py       # ScheduleZero Discord cog
-│       └── sprockets/                # Pluggable job modules
-│
-├── tests/                            # Test suite
-├── config.yaml                       # Application configuration
-├── handler_registry.yaml             # Handler registry storage
-├── mkdocs.yml                        # MkDocs configuration
-└── pyproject.toml                    # Poetry dependencies
-
-```
-
-### Documentation Files
-
-- **[REFACTORING_SUMMARY.md](REFACTORING_SUMMARY.md)** - Detailed refactoring notes and architecture decisions
-- **[TESTING_STATUS.md](TESTING_STATUS.md)** - Current testing status & known issues
-- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Multi-deployment configuration guide
-- **[docs/FRONTEND_ARCHITECTURE.md](docs/FRONTEND_ARCHITECTURE.md)** - Microsite + HTMX + Islands architecture
-- **[docs/COMPONENT_SPECS.md](docs/COMPONENT_SPECS.md)** - Web component specifications
-- **[docs/EXECUTION_LOGGING_API.md](docs/EXECUTION_LOGGING_API.md)** - Job execution logging API
-- **[docs/PORT_ZERO_BINDING.md](docs/PORT_ZERO_BINDING.md)** - ZMQ port 0 (dynamic port) usage
-- **[examples/README.md](examples/README.md)** - Integration examples overview
-- **[examples/DISCORD_INTEGRATION.md](examples/DISCORD_INTEGRATION.md)** - Discord bot integration guide
-- **[examples/COG_SPROCKET_ARCHITECTURE.md](examples/COG_SPROCKET_ARCHITECTURE.md)** - Discord cog + sprocket pattern
-
-### Web Documentation
-
-The complete documentation is available in the web interface at `/docs`, featuring:
-- Material Design theme with ScheduleZero branding
-- Light/dark mode toggle
-- Full-text search
-- Code syntax highlighting with copy buttons
-- Responsive mobile design
-- Mermaid diagrams for architecture visualization
+### Key Files
+- `src/schedule_zero/tornado_app_server.py` - Main server
+- `src/schedule_zero/zmq_registration_server.py` - Handler registration
+- `src/schedule_zero/microsites/` - Web UI microsites
+- `docs_site/` - MkDocs documentation source
+- `examples/` - Integration examples (Discord, etc.)
 
 ---
 
@@ -586,64 +372,39 @@ poetry run python test_schedule.py
 
 ---
 
-<!-- 
-================================================================================
-  ROADMAP
-  ✅ = Completed | 🚧 = In Progress | 📋 = Planned
-================================================================================
--->
-
 ## 🛣️ Roadmap
 
-### Core System
-- [x] ✅ APScheduler 4.x async integration
-- [x] ✅ ZeroMQ handler communication
-- [x] ✅ Dynamic handler registration
-- [x] ✅ REST API for job scheduling
-- [x] ✅ Job execution logging with metrics
-- [x] ✅ Multi-deployment support
-- [x] ✅ Graceful shutdown handling
-- [ ] 📋 Authentication & authorization
-- [ ] 📋 Handler health monitoring with heartbeats
-- [ ] 📋 Job dependency management (DAGs)
-- [ ] 📋 Multi-instance clustering
+### 🔥 **Top Priority: Security for Demo Deployment**
+- [ ] **Authentication & Authorization** (See [SECURITY_AND_NETWORKING.md](docs/SECURITY_AND_NETWORKING.md))
+  - JWT authentication for API
+  - Handler API key system
+  - Role-based access control (admin/operator/viewer)
+  - Rate limiting
+- [ ] **Network Security**
+  - HTTPS/TLS support
+  - ZMQ CurveZMQ encryption option
+  - ROUTER/DEALER pattern for better handler management
 
-### Web Interface
-- [x] ✅ Microsite architecture foundation
-- [x] ✅ HTMX navigation system
-- [x] ✅ Container layout with web components
-- [x] ✅ MkDocs integration with branding
-- [x] ✅ Dashboard microsite (basic)
-- [ ] 🚧 Dashboard with real APScheduler data
-- [ ] 🚧 Vuetify islands for data grids
-- [ ] 📋 Schedule management microsite
-- [ ] 📋 Handler management microsite
-- [ ] 📋 Execution log viewer with filtering
-- [ ] 📋 Real-time updates via WebSocket
+### ✅ Completed
+- APScheduler 4.x async integration
+- ZeroMQ handler communication
+- Dynamic handler registration
+- REST API for job scheduling
+- Execution logging with metrics
+- Microsite architecture with HTMX
+- MkDocs integration with branding
 
-### Developer Experience
-- [x] ✅ Poetry-based dependency management
-- [x] ✅ Comprehensive documentation (MkDocs)
-- [x] ✅ Discord bot integration examples
-- [ ] 📋 Docker containerization
-- [ ] 📋 Docker Compose for full stack
-- [ ] 📋 PyPI package publication
-- [ ] 📋 CI/CD pipeline (GitHub Actions)
-- [ ] 📋 Automated testing suite
+### 🚧 In Progress
+- Dashboard with real APScheduler data
+- Vuetify islands for data grids
 
-### Operations & Monitoring
-- [ ] 📋 Prometheus metrics export
-- [ ] 📋 Structured logging (JSON output)
-- [ ] 📋 OpenTelemetry tracing
-- [ ] 📋 Health check endpoints
-- [ ] 📋 Performance benchmarks
+### 📋 Planned
+- **Web Interface**: Schedule/handler management microsites, real-time updates
+- **DevOps**: Docker, CI/CD, PyPI package
+- **Monitoring**: Prometheus metrics, health checks
+- **Integrations**: Slack, Telegram, webhooks
 
-### Integrations
-- [x] ✅ Discord bot (examples)
-- [ ] 📋 Slack bot integration
-- [ ] 📋 Telegram bot integration
-- [ ] 📋 Webhook notifications
-- [ ] 📋 Email notifications
+> � **Full roadmap** with detailed tasks: See [GitHub Projects](https://github.com/esotericbyte/ScheduleZero/projects) and [Discussions](https://github.com/esotericbyte/ScheduleZero/discussions)
 
 ---
 
