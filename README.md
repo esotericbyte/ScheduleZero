@@ -19,18 +19,22 @@
 ---
 
 ## 🎯 Overview
-
 **ScheduleZero** is a resource-conscious, distributed task scheduling system built entirely in Python. Perfect for scenarios where heavyweight solutions like Celery are overkill—especially on memory-constrained systems like small VMs or edge devices.
 
-**Why ScheduleZero?**
-- 🪶 **Lightweight**: No message broker required (RabbitMQ/Redis)
-- 🚀 **Fast**: Built on modern async Python (asyncio, Tornado)
-- 🔄 **Distributed**: Scale horizontally with worker handlers
-- 💾 **Persistent**: SQLite-based job storage
-- 🎨 **Beautiful UI**: Modern web interface for monitoring
-- 🔌 **Brokerless**: Direct RPC communication via zerorpc
-- 🛡️ **Reliable**: Built-in retry logic with exponential backoff
+## Warning 
+**SchdeuleZero database and scheduling API is the AppScheduler 4.0 project. The profile of features in this project is quite different, broader in some ways and more focused in others. ** 
+Be aware that ScheduleZero is in ALPHA and depends intimently with AppSchduler 4.0 and it's event model. This is Pre-Release software.
+ScheduleZero project intends to contribute upstream to AppScheduler. 
+Features are subject to change and clarification. Maping of testing coverage, verification and a dev cycle that pulls from upstream regularly had not been implimented.
 
+
+**Why ScheduleZero? target features include:**
+- 🪶 **Lightweight**: No message broker required (RabbitMQ/Redis). Simplest deployment model only uses Direct RPC communication via ZeroMQ.
+- 🚀 **Fast**: Built on modern async Python (asyncio, Tornado)
+- 🔄 **Distributed**: Separate process worker handlers with observablity in the interface may also add some orchestration features and feedback/back-pressure. 
+- 💾 **Persistent**: SQLite-based job storage
+- 🎨 **Beautiful UI**: Modern modular extentable microsite web interface for dashboard and UX based on HTMX, html component api, and controls developed as Vuetify "islands".
+- 🛡️ **Reliable**: Built-in retry logic with exponential backoff
 ---
 
 ## ✨ Features
@@ -44,7 +48,7 @@
 - **🎛️ Web Dashboard**: Real-time monitoring and job management
 - **💾 Persistent Storage**: Jobs survive restarts via SQLite
 - **🔐 Thread-Safe**: Concurrent job execution with proper locking
-
+ 
 ### Advanced Features
 - **Dynamic Handler Registration**: Add/remove workers on-the-fly
 - **Method-Level Routing**: Route jobs to specific handler methods
@@ -53,6 +57,8 @@
 - **Graceful Shutdown**: Clean termination of all components
 - **Exponential Backoff**: Smart retry logic for failed jobs
 
+### Target integrations
+TBD (listed after they are working and tested)
 ---
 
 ## 🚀 Quick Start
@@ -79,6 +85,8 @@ version: "1.0.0"
 ```
 
 ### Running
+
+// TODO: insert some common text harnesses with local govenor
 
 **Terminal 1 - Start the Server:**
 ```bash
