@@ -21,12 +21,13 @@
 ## 🎯 Overview
 **ScheduleZero** is a resource-conscious, distributed task scheduling system built entirely in Python. Perfect for scenarios where heavyweight solutions like Celery are overkill—especially on memory-constrained systems like small VMs or edge devices.
 
-## Warning 
-**SchdeuleZero database and scheduling API is the AppScheduler 4.0 project. The profile of features in this project is quite different, broader in some ways and more focused in others. ** 
-Be aware that ScheduleZero is in ALPHA and depends intimently with AppSchduler 4.0 and it's event model. This is Pre-Release software.
+## Warning this project depends on Pre-Release software.
+**SchdeuleZero database and scheduling API is the AppScheduler 4.0 project. The profile of features in this project is quite different, broader in some ways and less focused in others, and it is similar to some existing projects based on AppScheduler ** 
+Be aware that ScheduleZero is in the earliest stages of development with one developer and depends internally with AppSchduler 4.0 and it's event model. 
 ScheduleZero project intends to contribute upstream to AppScheduler. 
 Features are subject to change and clarification. Maping of testing coverage, verification and a dev cycle that pulls from upstream regularly had not been implimented.
 
+TO DO: Working instance of ScheduleZero <link>
 
 **Why ScheduleZero? target features include:**
 - 🪶 **Lightweight**: No message broker required (RabbitMQ/Redis). Simplest deployment model only uses Direct RPC communication via ZeroMQ.
