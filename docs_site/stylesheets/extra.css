@@ -1,0 +1,214 @@
+/* ScheduleZero MkDocs Branding */
+
+:root {
+  /* ScheduleZero Brand Colors */
+  --sz-primary: #2563eb;
+  --sz-primary-dark: #1e40af;
+  --sz-accent: #6366f1;
+  --sz-success: #10b981;
+  --sz-warning: #f59e0b;
+  --sz-error: #ef4444;
+}
+
+/* Enhanced header branding */
+.md-header {
+  background: linear-gradient(135deg, var(--sz-primary) 0%, var(--sz-accent) 100%);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+}
+
+.md-header__title {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Logo styling */
+.md-logo img {
+  filter: brightness(0) invert(1);
+}
+
+/* Navigation tabs enhancement */
+.md-tabs {
+  background: linear-gradient(135deg, var(--sz-primary-dark) 0%, var(--sz-primary) 100%);
+}
+
+/* Primary button styling */
+.md-typeset .md-button--primary {
+  background: linear-gradient(135deg, var(--sz-primary) 0%, var(--sz-accent) 100%);
+  border: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.md-typeset .md-button--primary:hover {
+  background: linear-gradient(135deg, var(--sz-primary-dark) 0%, var(--sz-primary) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+/* Link colors */
+.md-typeset a {
+  color: var(--sz-primary);
+}
+
+.md-typeset a:hover {
+  color: var(--sz-accent);
+}
+
+/* Code block enhancements */
+.md-typeset code {
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.15);
+  border-radius: 4px;
+}
+
+.md-typeset pre > code {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Admonition enhancements */
+.md-typeset .admonition {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.md-typeset .admonition.note {
+  border-left: 4px solid var(--sz-primary);
+}
+
+.md-typeset .admonition.tip {
+  border-left: 4px solid var(--sz-success);
+}
+
+.md-typeset .admonition.warning {
+  border-left: 4px solid var(--sz-warning);
+}
+
+.md-typeset .admonition.danger {
+  border-left: 4px solid var(--sz-error);
+}
+
+/* Search box enhancement */
+.md-search__input {
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.md-search__input:focus {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Navigation items */
+.md-nav__link--active {
+  color: var(--sz-primary);
+  font-weight: 600;
+}
+
+.md-nav__link:hover {
+  color: var(--sz-accent);
+}
+
+/* Table of contents */
+.md-nav--secondary .md-nav__link--active {
+  border-left: 3px solid var(--sz-primary);
+}
+
+/* Cards (for homepage) */
+.md-typeset .grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.md-typeset .card {
+  background: var(--md-default-bg-color);
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.md-typeset .card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.15);
+  border-color: var(--sz-primary);
+}
+
+.md-typeset .card h3 {
+  margin-top: 0;
+  color: var(--sz-primary);
+}
+
+/* Better code copy button */
+.md-clipboard {
+  color: var(--sz-primary);
+}
+
+.md-clipboard:hover {
+  color: var(--sz-accent);
+}
+
+/* Footer branding */
+.md-footer {
+  background: linear-gradient(135deg, var(--sz-primary-dark) 0%, var(--sz-primary) 100%);
+}
+
+/* Version/announcement banner */
+.md-banner {
+  background: linear-gradient(135deg, var(--sz-accent) 0%, var(--sz-primary) 100%);
+}
+
+/* Scrollbar styling (Webkit browsers) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--sz-primary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--sz-accent);
+}
+
+/* Dark mode adjustments */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #2563eb;
+  --md-accent-fg-color: #6366f1;
+}
+
+[data-md-color-scheme="slate"] .md-typeset code {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+/* Responsive improvements */
+@media screen and (max-width: 76.1875em) {
+  .md-nav--primary .md-nav__title {
+    background: linear-gradient(135deg, var(--sz-primary) 0%, var(--sz-accent) 100%);
+  }
+}
+
+/* ScheduleZero branding badge */
+.md-typeset .schedulezero-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--sz-primary) 0%, var(--sz-accent) 100%);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}

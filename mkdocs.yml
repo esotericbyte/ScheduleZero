@@ -1,21 +1,55 @@
-site_name: ScheduleZero Documentation
-site_description: Dynamic job scheduling with ZMQ handlers
+site_name: ScheduleZero
+site_description: Dynamic job scheduling with ZMQ handlers and APScheduler 4.x
+site_author: ScheduleZero Team
+site_url: https://schedulezero.dev
 
 plugins:
-  - search
+  - search:
+      lang: en
   - tags
 
 theme:
   name: material
+  logo: assets/logo.svg
+  favicon: assets/favicon.png
   palette:
-    scheme: slate
-    primary: indigo
-    accent: teal
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
   features:
+    - navigation.instant
+    - navigation.instant.prefetch
     - navigation.tabs
+    - navigation.tabs.sticky
     - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.top
+    - navigation.tracking
+    - toc.follow
     - toc.integrate
     - search.suggest
+    - search.highlight
+    - search.share
+    - header.autohide
+    - content.code.copy
+    - content.code.annotate
+  font:
+    text: Inter
+    code: JetBrains Mono
 
 nav:
   - Home: index.md
@@ -40,10 +74,40 @@ site_dir: docs_site_build
 
 markdown_extensions:
   - admonition
-  - codehilite
-  - pymdownx.highlight
-  - pymdownx.superfences
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets
   - toc:
       permalink: true
+      permalink_title: Anchor link to this section
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/esotericbyte/ScheduleZero
+      name: ScheduleZero on GitHub
+  generator: false
+
+extra_css:
+  - stylesheets/extra.css

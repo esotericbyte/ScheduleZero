@@ -4,12 +4,20 @@
 
 {% block content %}
 <div class="docs-wrapper">
-    <iframe 
-        id="docs-iframe"
-        src="/docs-content/{{ iframe_path }}"
-        title="ScheduleZero Documentation"
-        frameborder="0">
-    </iframe>
+    <div class="docs-header">
+        <h1>📖 Documentation</h1>
+        <p>Complete guide to ScheduleZero - Dynamic job scheduling with ZMQ handlers</p>
+    </div>
+    
+    <div class="docs-iframe-container">
+        <iframe 
+            id="docs-iframe"
+            src="/docs-content/{{ iframe_path }}"
+            title="ScheduleZero Documentation"
+            frameborder="0"
+            loading="lazy">
+        </iframe>
+    </div>
 </div>
 
 <style>
@@ -17,14 +25,75 @@
     /* Remove default content padding */
     margin: -2rem;
     height: calc(100vh - 2rem);
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
+    background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
+}
+
+.docs-header {
+    background: linear-gradient(135deg, #2563eb 0%, #6366f1 100%);
+    color: white;
+    padding: 1.5rem 2rem;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+}
+
+.docs-header h1 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+.docs-header p {
+    margin: 0.5rem 0 0 0;
+    opacity: 0.95;
+    font-size: 0.95rem;
+}
+
+.docs-iframe-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px 12px 0 0;
+    margin: 1rem;
+    margin-bottom: 0;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+    background: white;
 }
 
 #docs-iframe {
-    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     border: none;
+    display: block;
+}
+
+/* Loading state */
+#docs-iframe:not([src]) {
+    background: 
+        linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%)
+        center/100% 100%;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .docs-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .docs-header p {
+        font-size: 0.875rem;
+    }
+    
+    .docs-iframe-container {
+        margin: 0.5rem;
+        margin-bottom: 0;
+        border-radius: 8px 8px 0 0;
+    }
 }
 </style>
 {% end %}
