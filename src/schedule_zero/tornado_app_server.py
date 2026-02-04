@@ -21,6 +21,7 @@ from .app_configuration import (
     load_config,
     README_FILE_PATH
 )
+from .portal_configuration import load_portal_config, PortalConfig
 from .handler_registry import RegistryManager
 from .job_executor import JobExecutor
 from .job_execution_log import JobExecutionLog
@@ -43,8 +44,11 @@ from .api import (
     JobExecutionErrorsHandler,
     JobExecutionClearHandler,
     DocsHandler,
-    DocsIndexHandler
+    DocsIndexHandler,
+    PortalConfigHandler
 )
+
+from .microsites.sz_dash.handlers import DashboardHandler
 
 # Get deployment configuration
 DEPLOYMENT = get_deployment_config()
@@ -57,26 +61,48 @@ setup_logging(
 )
 logger = get_logger(__name__, component="TornadoServer")
 
-# Register microsites
-from .microsites import sz_dash
-from .microsites import mkdocs
+# Load portal configuration (optional - graceful degradation if missing)
+PORTAL_CONFIG = load_portal_config()
 
-microsite_path = os.path.join(os.path.dirname(__file__), 'microsites')
-microsite_registry.register(Microsite(
-    name="Dashboard",
-    url_prefix="/dash",
-    routes=sz_dash.routes.routes,
-    assets_path=os.path.join(microsite_path, 'sz_dash', 'assets'),
-    templates_path=os.path.join(microsite_path, 'sz_dash', 'templates')
-))
+# Register microsites dynamically from portal configuration
+from .microsites import registry as microsite_registry, Microsite
+import importlib
 
-microsite_registry.register(Microsite(
-    name="Documentation",
-    url_prefix="/docs",
-    routes=mkdocs.routes.routes,
-    assets_path=os.path.join(microsite_path, 'mkdocs'),  # No assets for mkdocs microsite
-    templates_path=os.path.join(microsite_path, 'mkdocs')  # No templates needed (static docs)
-))
+if PORTAL_CONFIG:
+    for ms_config in PORTAL_CONFIG.get_enabled_microsites():
+        try:
+            # Dynamically import the routes module
+            routes_module = importlib.import_module(ms_config.routes_module)
+            
+            microsite = Microsite(
+                name=ms_config.name,
+                url_prefix=ms_config.url_prefix,
+                routes=routes_module.routes,
+                assets_path=str(PORTAL_CONFIG.get_microsite_assets_path(ms_config)),
+                templates_path=str(PORTAL_CONFIG.get_microsite_templates_path(ms_config))
+            )
+            microsite_registry.register(microsite)
+            logger.info(f"Registered microsite: {ms_config.name} at {ms_config.url_prefix}")
+            
+        except (ImportError, AttributeError) as e:
+            logger.warning(f"Skipping microsite '{ms_config.name}': {e}")
+else:
+    # No portal config - register minimal docs microsite only
+    logger.info("No portal config - registering minimal docs microsite")
+    try:
+        from .microsites import mkdocs
+        microsite_registry.register(Microsite(
+            name="Documentation",
+            url_prefix="/docs",
+            routes=mkdocs.routes.routes,
+            assets_path=os.path.join(os.path.dirname(__file__), 'microsites', 'mkdocs'),
+            templates_path=os.path.join(os.path.dirname(__file__), 'microsites', 'mkdocs')
+        ))
+        logger.info("Registered minimal docs microsite at /docs")
+    except ImportError as e:
+        logger.warning(f"Could not load docs microsite: {e}")
+
+
 
 
 def log_function(handler):
@@ -114,6 +140,8 @@ def make_tornado_app(config, registry_manager, scheduler, job_executor, executio
     """
     Create and configure the Tornado application.
     
+    Paths from portal_config.yaml if present, otherwise minimal fallback.
+    
     Args:
         config: Application configuration dictionary
         registry_manager: RegistryManager instance
@@ -124,8 +152,18 @@ def make_tornado_app(config, registry_manager, scheduler, job_executor, executio
     Returns:
         Configured Tornado application
     """
-    # Get portal path for templates and static files
-    portal_path = os.path.join(os.path.dirname(__file__), 'portal')
+    # Use portal root from configuration, or minimal fallback
+    if PORTAL_CONFIG:
+        portal_path = str(PORTAL_CONFIG.portal_root)
+        static_path = str(PORTAL_CONFIG.get_static_path())
+        logger.info(f"Portal path: {portal_path}")
+        logger.info(f"Static path: {static_path}")
+    else:
+        # Minimal fallback: serve branded page only
+        portal_path = os.path.join(os.path.dirname(__file__), 'portal_minimal')
+        static_path = os.path.join(portal_path, 'static')
+        logger.info("Using minimal branded portal (no portal_config.yaml)")
+        logger.info(f"Minimal portal path: {portal_path}")
     
     # Common dependencies for API handlers
     api_deps = {
@@ -144,10 +182,21 @@ def make_tornado_app(config, registry_manager, scheduler, job_executor, executio
     # Get docs path (built mkdocs site)
     docs_build_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'docs_site_build')
     
+    # Dashboard dependencies
+    dashboard_deps = {
+        'registry': registry_manager.registry,
+        'registry_lock': registry_manager.lock,
+        'scheduler': scheduler
+    }
+    
     # Original API routes
     routes = [
         # Main UI
         (r"/", IndexHandler, {'config': config, 'template_path': portal_path}),
+        (r"/dashboard", tornado.web.RedirectHandler, {"url": "/dash/"}),
+        
+        # Dashboard microsite
+        (r"/dash/?", DashboardHandler, dashboard_deps),
         
         # Web Views (HTML pages that consume JSON APIs)
         (r"/view/handlers", HandlersViewHandler),
@@ -156,6 +205,7 @@ def make_tornado_app(config, registry_manager, scheduler, job_executor, executio
         # API endpoints (JSON only)
         (r"/api/health", HealthCheckHandler),
         (r"/api/readme", ReadmeHandler, {'readme_path': README_FILE_PATH}),
+        (r"/api/portal/config", PortalConfigHandler, {'portal_config': PORTAL_CONFIG}),
         (r"/api/handlers", ListHandlersHandler, api_deps),
         (r"/api/schedule", ScheduleJobHandler, api_deps),
         (r"/api/run_now", RunNowHandler, api_deps),
@@ -168,24 +218,31 @@ def make_tornado_app(config, registry_manager, scheduler, job_executor, executio
         (r"/api/executions/stats", JobExecutionStatsHandler, execution_log_deps),
         (r"/api/executions/errors", JobExecutionErrorsHandler, execution_log_deps),
         (r"/api/executions/clear", JobExecutionClearHandler, execution_log_deps),
-        
-        # MkDocs content (served in iframe) - must come before microsite routes
-        (r"/docs-content/(.*)", mkdocs.routes.DocsContentHandler),
     ]
     
-    # Add microsite routes and static handlers (includes /docs wrapper)
+    # Add microsite routes and static handlers
     routes.extend(microsite_registry.get_all_handlers())
     
-    # Get all template paths (portal + microsites)
-    template_paths = [portal_path] + microsite_registry.get_template_paths()
+    # Tornado template configuration
+    # Set template root to src/schedule_zero so templates can use relative paths
+    # e.g., microsites/sz_dash/templates/dashboard.html can extend portal/templates/layout.html
+    from tornado.template import Loader
+    template_root = os.path.dirname(__file__)  # src/schedule_zero/
+    template_loader = Loader(
+        template_root,
+        autoescape=None,
+        whitespace=None
+    )
     
     return tornado.web.Application(
         routes,
-        template_path=template_paths,
-        static_path=os.path.join(portal_path, 'static'),
-        debug=True,  # Set to True for development - disables template caching
-        serve_traceback=True,  # Set to True to see full tracebacks in API responses
-        log_function=log_function  # Custom logging to suppress polling endpoint spam
+        template_path=template_root,  # Root for all template lookups
+        template_loader=template_loader,
+        static_path=static_path,  # From portal config or minimal
+        debug=not PORTAL_CONFIG.template_cache if PORTAL_CONFIG else True,
+        autoreload=PORTAL_CONFIG.template_autoreload if PORTAL_CONFIG else True,
+        serve_traceback=True,
+        log_function=log_function
     )
 
 

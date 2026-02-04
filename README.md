@@ -202,7 +202,6 @@ Open your browser to:
 - **[Security & Networking](docs/SECURITY_AND_NETWORKING.md)** - Authentication roadmap, NAT traversal, ZMQ patterns
 - **[Deployment Guide](DEPLOYMENT_GUIDE.md)** - Multi-deployment configurations
 - **[Testing Status](TESTING_STATUS.md)** - Current test coverage and known issues
-- **[Discord Integration](examples/DISCORD_INTEGRATION.md)** - Bot integration examples
 - **Web Docs**: Start server and visit http://localhost:8888/docs
 
 ### Key Files
@@ -210,7 +209,6 @@ Open your browser to:
 - `src/schedule_zero/zmq_registration_server.py` - Handler registration
 - `src/schedule_zero/microsites/` - Web UI microsites
 - `docs_site/` - MkDocs documentation source
-- `examples/` - Integration examples (Discord, etc.)
 
 ---
 

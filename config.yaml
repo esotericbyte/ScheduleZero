@@ -1,9 +1,0 @@
-# Example configuration for a ScheduleZero instance
-instance_name: "My ScheduleZero Instance"
-description: "Handles various scheduled tasks for project X."
-admin_contact: "admin@example.com"
-version: "0.1.0-alpha"
-
-# Optional: Add other instance-specific metadata here
-# deployment_environment: "development"
-# region: "us-east-1"

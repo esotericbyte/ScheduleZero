@@ -1,0 +1,151 @@
+{% extends "layout.html" %}
+
+{% block title %}Component Test - ScheduleZero{% end %}
+
+{% block content %}
+<div class="component-test" style="padding: 2rem; max-width: 1200px; margin: 0 auto;">
+    <h1>Component Sync Test</h1>
+    <p style="margin-bottom: 2rem;">Testing vanilla and Vuetify islands from schedulezero-islands</p>
+    
+    <!-- Section 1: Vanilla Components -->
+    <section style="margin-bottom: 3rem; padding: 1.5rem; border: 1px solid #ddd; border-radius: 8px;">
+        <h2 style="margin-bottom: 1rem;">Vanilla JS Islands</h2>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <h3>Connection Status</h3>
+            <connection-status></connection-status>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <h3>Copy Button</h3>
+            <copy-button text="Hello from ScheduleZero!" label="Copy Test Text"></copy-button>
+        </div>
+        
+        <div>
+            <h3>Flash Messages</h3>
+            <button onclick="testFlash()" class="btn btn-primary">Trigger Flash Message</button>
+            <sz-flash></sz-flash>
+        </div>
+    </section>
+    
+    <!-- Section 2: Vuetify Components -->
+    <section style="padding: 1.5rem; border: 1px solid #ddd; border-radius: 8px;">
+        <h2 style="margin-bottom: 1rem;">Vuetify Islands</h2>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <h3>Schedule Grid</h3>
+            <div id="schedule-grid"></div>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <h3>Handler Grid</h3>
+            <div id="handler-grid"></div>
+        </div>
+        
+        <div>
+            <h3>Execution Log Grid</h3>
+            <div id="execution-log-grid"></div>
+        </div>
+    </section>
+</div>
+{% end %}
+
+{% block microsite_js %}
+<!-- Vanilla Components -->
+<script src="/dash/static/js/components/vanilla/connection-status.min.js"></script>
+<script src="/dash/static/js/components/vanilla/copy-button.min.js"></script>
+<script src="/dash/static/js/components/vanilla/sz-flash.min.js"></script>
+
+<!-- Vuetify Components (includes Vue + Vuetify) -->
+<script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify@3/dist/vuetify.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vuetify@3/dist/vuetify.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7/css/materialdesignicons.min.css">
+
+<script src="/dash/static/js/components/vuetify/schedule-grid.min.js"></script>
+<script src="/dash/static/js/components/vuetify/handler-grid.min.js"></script>
+<script src="/dash/static/js/components/vuetify/execution-log-grid.min.js"></script>
+
+<script>
+// Test flash message
+function testFlash() {
+    const flash = document.querySelector('sz-flash');
+    flash.show('Component sync successful!', 'success');
+}
+
+// Initialize Vuetify islands with test data
+document.addEventListener('DOMContentLoaded', () => {
+    // Schedule Grid test data
+    if (window.ScheduleGrid) {
+        const scheduleApp = Vue.createApp({
+            template: '<schedule-grid :schedules="schedules" />',
+            data() {
+                return {
+                    schedules: [
+                        { id: 'test-1', name: 'Test Job 1', trigger: 'interval', next_run: new Date().toISOString(), status: 'active' },
+                        { id: 'test-2', name: 'Test Job 2', trigger: 'cron', next_run: new Date().toISOString(), status: 'paused' }
+                    ]
+                };
+            }
+        });
+        const vuetify = Vuetify.createVuetify();
+        scheduleApp.use(vuetify);
+        scheduleApp.component('schedule-grid', window.ScheduleGrid);
+        scheduleApp.mount('#schedule-grid');
+    }
+    
+    // Handler Grid test data
+    if (window.HandlerGrid) {
+        const handlerApp = Vue.createApp({
+            template: '<handler-grid :handlers="handlers" />',
+            data() {
+                return {
+                    handlers: [
+                        { id: 'handler-1', name: 'Test Handler', address: 'tcp://127.0.0.1:5555', status: 'connected' }
+                    ]
+                };
+            }
+        });
+        const vuetify = Vuetify.createVuetify();
+        handlerApp.use(vuetify);
+        handlerApp.component('handler-grid', window.HandlerGrid);
+        handlerApp.mount('#handler-grid');
+    }
+    
+    // Execution Log Grid test data
+    if (window.ExecutionLogGrid) {
+        const logApp = Vue.createApp({
+            template: '<execution-log-grid :logs="logs" />',
+            data() {
+                return {
+                    logs: [
+                        { id: 1, job_id: 'test-1', timestamp: new Date().toISOString(), status: 'success', duration: 0.5 }
+                    ]
+                };
+            }
+        });
+        const vuetify = Vuetify.createVuetify();
+        logApp.use(vuetify);
+        logApp.component('execution-log-grid', window.ExecutionLogGrid);
+        logApp.mount('#execution-log-grid');
+    }
+});
+</script>
+
+<style>
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+.btn-primary {
+    background-color: #1976d2;
+    color: white;
+}
+.btn-primary:hover {
+    background-color: #1565c0;
+}
+</style>
+{% end %}

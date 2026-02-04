@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ScheduleZero{% end %}</title>
+    
+    <!-- Theme CSS -->
+    <link rel="stylesheet" href="/static/css/theme.css">
+    
+    <!-- Additional page-specific styles -->
+    {% block head %}{% end %}
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+    <!-- Portal Navigation Component -->
+    <sz-nav 
+        config-url="/api/portal/config" 
+        current-path="{{ handler.request.path }}">
+    </sz-nav>
+    
+    <!-- Main Content Area (HTMX swap target) -->
+    <main id="content" role="main">
+        {% block content %}{% end %}
+    </main>
+    
+    <!-- Flash Messages Component -->
+    <sz-flash></sz-flash>
+    
+    <!-- Web Components -->
+    <script type="module" src="/static/js/components/sz-nav.min.js"></script>
+    <script type="module" src="/static/js/components/sz-flash.min.js"></script>
+    
+    <!-- HTMX Configuration -->
+    <script>
+        // Update active nav item after HTMX content swap
+        document.body.addEventListener('htmx:afterSwap', (event) => {
+            const nav = document.querySelector('sz-nav');
+            if (nav && event.detail.target.id === 'content') {
+                // Update current path to highlight active nav item
+                nav.setAttribute('current-path', window.location.pathname);
+            }
+        });
+        
+        // Handle navigation errors
+        document.body.addEventListener('htmx:responseError', (event) => {
+            const flash = document.querySelector('sz-flash');
+            if (flash) {
+                flash.show('Error loading content', 'error');
+            }
+        });
+        
+        // Show loading indicator
+        document.body.addEventListener('htmx:beforeRequest', (event) => {
+            if (event.detail.target.id === 'content') {
+                event.detail.target.style.opacity = '0.5';
+            }
+        });
+        
+        document.body.addEventListener('htmx:afterSettle', (event) => {
+            if (event.detail.target.id === 'content') {
+                event.detail.target.style.opacity = '1';
+            }
+        });
+    </script>
+    
+    <!-- Additional page-specific scripts -->
+    {% block scripts %}{% end %}
+</body>
+</html>

@@ -1,0 +1,69 @@
+# ScheduleZero Portal Configuration
+# This file is REQUIRED - the server will not start without it
+
+# Portal Metadata
+portal_name: "ScheduleZero Default Portal"
+portal_version: "1.0.0"
+description: "Main administrative portal for ScheduleZero task scheduler"
+admin_contact: "admin@example.com"
+
+# Portal Root - REQUIRED
+# Path to the portal directory (absolute or relative to this config file)
+# With Vite build system, this should point to schedule-zero-islands build output
+portal_root: "../schedule-zero-islands/dist/portal1"
+
+# Component Library Configuration
+# Defines which custom HTML tags/components are valid for validation
+component_library:
+  - htmx           # HTMX attributes and custom elements (hx-*, <hx-*>)
+  - web-components # Custom elements with hyphens (<sz-nav>, <sz-*>)
+  # - vue          # Vue.js components and directives (v-*, <v-*>)
+
+# Microsites Configuration - REQUIRED
+# Each microsite must have:
+#   - name: Display name
+#   - url_prefix: URL path prefix (e.g., /dash)
+#   - routes_module: Python module path to routes.py
+#   - templates_path: Path to Tornado templates (relative to portal_root or absolute)
+#   - assets_path: Path to static assets (relative to portal_root or absolute)
+microsites:
+  - name: "Dashboard"
+    url_prefix: "/dash"
+    routes_module: "schedule_zero.microsites.sz_dash.routes"
+    templates_path: "microsites/sz_dash/templates"
+    assets_path: "microsites/sz_dash/assets"
+    enabled: true
+
+  - name: "Schedules Manager"
+    url_prefix: "/schedules"
+    routes_module: "schedule_zero.microsites.sz_schedules.routes"
+    templates_path: "microsites/sz_schedules/templates"
+    assets_path: "microsites/sz_schedules/assets"
+    enabled: true
+
+  - name: "Handlers Registry"
+    url_prefix: "/handlers"
+    routes_module: "schedule_zero.microsites.sz_handlers.routes"
+    templates_path: "microsites/sz_handlers/templates"
+    assets_path: "microsites/sz_handlers/assets"
+    enabled: true
+
+  - name: "Documentation"
+    url_prefix: "/docs"
+    routes_module: "schedule_zero.microsites.mkdocs.routes"
+    templates_path: "microsites/mkdocs/templates"
+    assets_path: "microsites/mkdocs/assets"
+    enabled: true
+
+# Static Assets Configuration
+static_path: "static"  # Relative to portal_root
+static_url_prefix: "/static/"
+
+# Template Configuration
+template_cache: true  # Set to false for development
+template_autoreload: false  # Set to true for development
+
+# Development Mode Settings
+# Uncomment these for local development
+# portal_root: "src/schedule_zero/portal"  # Use Python-served portal instead of Vite build
+# template_autoreload: true

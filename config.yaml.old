@@ -1,0 +1,22 @@
+# Example configuration for a ScheduleZero instance
+instance_name: "My ScheduleZero Instance"
+description: "Handles various scheduled tasks for project X."
+admin_contact: "admin@example.com"
+version: "0.1.0-alpha"
+
+# Site Root - Directory containing portal and microsites
+# If not specified, defaults to src/schedule_zero/portal and src/schedule_zero/microsites
+site_root: null  # null = use built-in, or specify path like: "/path/to/custom/site"
+
+# Component Library - Defines which custom HTML tags/components are valid
+# Used by validation tools to distinguish between errors and valid framework components
+# Options: htmx, vue, web-components, custom
+component_library:
+  - htmx          # HTMX attributes and custom elements (hx-*, <hx-*>)
+  - web-components # Custom elements with hyphens (<sz-nav>, <sz-*>)
+  # - vue         # Vue.js components and directives (v-*, <v-*>)
+  # - custom      # Project-specific custom elements (define in validator)
+
+# Optional: Add other instance-specific metadata here
+# deployment_environment: "development"
+# region: "us-east-1"

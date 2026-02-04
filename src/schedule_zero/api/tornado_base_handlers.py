@@ -32,9 +32,15 @@ class BaseAPIHandler(tornado.web.RequestHandler):
     def set_default_headers(self):
         """Set CORS and content-type headers."""
         self.set_header("Content-Type", "application/json")
+        # CORS - Allow all origins (adjust for production)
         self.set_header("Access-Control-Allow-Origin", "*")
-        self.set_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-        self.set_header("Access-Control-Allow-Headers", "Content-Type")
+        self.set_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS")
+        # CRITICAL: Allow HTMX headers that the client sends
+        self.set_header("Access-Control-Allow-Headers", 
+                       "Content-Type, HX-Request, HX-Trigger, HX-Target, HX-Current-URL, HX-Prompt")
+        # CRITICAL: Expose HTMX headers that we send back to client
+        self.set_header("Access-Control-Expose-Headers",
+                       "HX-Trigger, HX-Redirect, HX-Refresh, HX-Push-Url, HX-Retarget, HX-Reswap")
     
     def options(self, *args, **kwargs):
         """Handle CORS preflight requests."""

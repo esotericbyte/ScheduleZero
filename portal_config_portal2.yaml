@@ -1,0 +1,57 @@
+# ScheduleZero Portal Configuration - Portal 2 (Alternative Example)
+# This demonstrates a second portal configuration for multi-tenant scenarios
+
+# Portal Metadata
+portal_name: "ScheduleZero Admin Portal"
+portal_version: "1.0.0"
+description: "Alternative portal configuration with different microsite layout"
+admin_contact: "ops@example.com"
+
+# Portal Root - REQUIRED
+portal_root: "../schedule-zero-islands/dist/portal2"
+
+# Component Library Configuration
+component_library:
+  - htmx
+  - web-components
+  - vue  # This portal uses Vuetify components
+
+# Microsites Configuration
+# Different microsites enabled compared to portal1
+microsites:
+  - name: "Operations Dashboard"
+    url_prefix: "/ops"
+    routes_module: "schedule_zero.microsites.sz_dash.routes"
+    templates_path: "microsites/sz_dash/templates"
+    assets_path: "microsites/sz_dash/assets"
+    enabled: true
+
+  - name: "System Monitor"
+    url_prefix: "/monitor"
+    routes_module: "schedule_zero.microsites.sz_handlers.routes"
+    templates_path: "microsites/sz_handlers/templates"
+    assets_path: "microsites/sz_handlers/assets"
+    enabled: true
+
+  # Schedules microsite disabled in this portal
+  - name: "Schedules Manager"
+    url_prefix: "/schedules"
+    routes_module: "schedule_zero.microsites.sz_schedules.routes"
+    templates_path: "microsites/sz_schedules/templates"
+    assets_path: "microsites/sz_schedules/assets"
+    enabled: false
+
+  - name: "Documentation"
+    url_prefix: "/docs"
+    routes_module: "schedule_zero.microsites.mkdocs.routes"
+    templates_path: "microsites/mkdocs/templates"
+    assets_path: "microsites/mkdocs/assets"
+    enabled: true
+
+# Static Assets Configuration
+static_path: "static"
+static_url_prefix: "/static/"
+
+# Template Configuration
+template_cache: true
+template_autoreload: false

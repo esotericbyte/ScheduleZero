@@ -4,11 +4,17 @@ Dashboard Microsite Routes
 Provides the main dashboard view with schedule overview.
 """
 
+import os
 import tornado.web
 
 
 class DashboardHandler(tornado.web.RequestHandler):
     """Main dashboard view showing schedule overview."""
+    
+    def initialize(self):
+        """Set template path for this microsite."""
+        template_dir = os.path.join(os.path.dirname(__file__), 'templates')
+        self.template_path = template_dir
     
     async def get(self):
         # TODO: Fetch actual schedule data from APScheduler
@@ -28,13 +34,29 @@ class DashboardHandler(tornado.web.RequestHandler):
         ]
         
         self.render(
-            'sz_dash/templates/dashboard.html',
+            'dashboard.html',
             active_site='dash',
             schedules=schedules
+        )
+
+
+class ComponentTestHandler(tornado.web.RequestHandler):
+    """Test page for verifying synced components."""
+    
+    def initialize(self):
+        """Set template path for this microsite."""
+        template_dir = os.path.join(os.path.dirname(__file__), 'templates')
+        self.template_path = template_dir
+    
+    async def get(self):
+        self.render(
+            'component_test.html',
+            active_site='dash'
         )
 
 
 # Microsite routes
 routes = [
     (r"/", DashboardHandler),
+    (r"/test/components", ComponentTestHandler),
 ]

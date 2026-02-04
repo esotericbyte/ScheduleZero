@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScheduleZero</title>
+    <link rel="stylesheet" href="/static/minimal.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚙️ ScheduleZero</h1>
+            <p class="tagline">Task Scheduling System</p>
+        </header>
+        
+        <main>
+            <div class="info-box">
+                <h2>Server Running</h2>
+                <p>The ScheduleZero backend is active and processing scheduled tasks.</p>
+            </div>
+            
+            <div class="info-box warning">
+                <h3>⚠️ No Portal Configuration</h3>
+                <p>Create <code>portal_config.yaml</code> to enable the full administrative portal with dashboard, schedule management, and handler registry.</p>
+                <p><a href="/docs">View Documentation →</a></p>
+            </div>
+            
+            <div class="api-info">
+                <h3>Available APIs</h3>
+                <ul>
+                    <li><code>GET /api/health</code> - Health check</li>
+                    <li><code>GET /api/handlers</code> - List registered handlers</li>
+                    <li><code>GET /api/schedules</code> - List active schedules</li>
+                    <li><code>POST /api/schedule</code> - Create new schedule</li>
+                    <li><code>POST /api/run_now</code> - Execute handler immediately</li>
+                    <li><code>GET /api/executions</code> - View execution history</li>
+                    <li><a href="/docs">Full API Documentation →</a></li>
+                </ul>
+            </div>
+            
+            <div class="setup-info">
+                <h3>Setting Up the Portal</h3>
+                <ol>
+                    <li>Create <code>portal_config.yaml</code> in project root</li>
+                    <li>Define portal root, microsites, and component libraries</li>
+                    <li>Build frontend with Vite in <code>schedule-zero-islands</code></li>
+                    <li>Restart server to load full portal</li>
+                </ol>
+                <p><a href="/docs">See Setup Guide →</a></p>
+            </div>
+        </main>
+        
+        <footer>
+            <p>ScheduleZero | <a href="/docs">Documentation</a> | <a href="/api/health">Health Check</a></p>
+        </footer>
+    </div>
+</body>
+</html>

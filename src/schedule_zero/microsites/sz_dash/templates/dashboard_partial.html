@@ -1,0 +1,216 @@
+<div class="dashboard">
+    <h1>Dashboard</h1>
+    
+    <!-- System Statistics -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-value">{{ stats.total_schedules }}</div>
+            <div class="stat-label">Total Schedules</div>
+            <div class="stat-sublabel">{{ stats.active_schedules }} active</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">⚙️</div>
+            <div class="stat-value">{{ stats.total_handlers }}</div>
+            <div class="stat-label">Total Handlers</div>
+            <div class="stat-sublabel">{{ stats.active_handlers }} active</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">✓</div>
+            <div class="stat-value">{{ stats.jobs_today }}</div>
+            <div class="stat-label">Jobs Today</div>
+            <div class="stat-sublabel">Completed executions</div>
+        </div>
+    </div>
+    
+    <!-- Recent Schedules -->
+    <div class="recent-section card">
+        <div class="section-header">
+            <h2>Recent Schedules</h2>
+            <button 
+                hx-get="/api/schedules" 
+                hx-target="#schedule-list"
+                hx-swap="innerHTML"
+                class="btn-refresh">
+                🔄 Refresh
+            </button>
+        </div>
+        
+        <div id="schedule-list" class="schedule-list">
+            {% if recent_schedules %}
+                {% for schedule in recent_schedules %}
+                <div class="schedule-item">
+                    <div class="schedule-info">
+                        <strong>{{ schedule.task }}</strong>
+                        <span class="schedule-meta">{{ schedule.trigger }}</span>
+                    </div>
+                    <div class="schedule-next-run">
+                        Next: {{ schedule.next_run }}
+                    </div>
+                </div>
+                {% end %}
+            {% else %}
+                <p class="empty-state">No schedules yet. Create your first schedule to get started!</p>
+            {% end %}
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="quick-actions card">
+        <h2>Quick Actions</h2>
+        <div class="action-buttons">
+            <a href="/schedules" 
+               hx-get="/schedules" 
+               hx-target="#content"
+               hx-push-url="true"
+               class="btn">
+                📅 View All Schedules
+            </a>
+            <a href="/handlers" 
+               hx-get="/handlers" 
+               hx-target="#content"
+               hx-push-url="true"
+               class="btn">
+                ⚙️ Manage Handlers
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+.dashboard {
+    max-width: 1200px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.stat-card {
+    background: var(--surface);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+    text-align: center;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-xs);
+}
+
+.stat-label {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.stat-sublabel {
+    font-size: 0.875rem;
+    color: var(--text-disabled);
+}
+
+.recent-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+.section-header h2 {
+    margin-bottom: 0;
+}
+
+.btn-refresh {
+    font-size: 0.875rem;
+    padding: var(--spacing-xs) var(--spacing-md);
+}
+
+.schedule-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.schedule-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+    background: var(--background-secondary);
+    border-radius: var(--border-radius);
+    border-left: 3px solid var(--primary-color);
+}
+
+.schedule-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.schedule-meta {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.schedule-next-run {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--text-secondary);
+}
+
+.quick-actions h2 {
+    margin-bottom: var(--spacing-lg);
+}
+
+.action-buttons {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+    
+    .schedule-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+}
+</style>

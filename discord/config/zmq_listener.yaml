@@ -1,0 +1,37 @@
+# ZMQ Listener Configuration for Discord Bot
+
+# ZeroMQ Publisher Address
+# This should point to the ScheduleZero server's PUB socket
+# Default: tcp://127.0.0.1:4243
+zmq_pub_address: "tcp://127.0.0.1:4243"
+
+# Topics to subscribe to
+# Use prefixes to match multiple topics:
+#   "job." - All job-related events
+#   "job.executed" - Only job execution events
+#   "handler." - All handler events
+#   "scheduler." - All scheduler events
+topics:
+  - "job."
+  - "handler."
+  - "scheduler."
+
+# Optional: Channel IDs for notifications
+# You can configure specific Discord channels to receive notifications
+notification_channels:
+  # Job execution notifications
+  job_executed: null  # Set to channel ID to enable
+  
+  # Job failure alerts
+  job_failed: null  # Set to channel ID to enable
+  
+  # Handler status updates
+  handler_status: null  # Set to channel ID to enable
+
+# Optional: Filter settings
+filters:
+  # Only notify on failures (ignore successful executions)
+  notify_only_on_failure: false
+  
+  # Minimum severity level for notifications (info, warning, error)
+  min_severity: "info"

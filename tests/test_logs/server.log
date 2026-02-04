@@ -1,4 +1,12 @@
-2025-10-28 07:23:18 - INFO     - root - Logging initialized at INFO level
+2026-02-04 13:43:32.253 [INFO] root - Logging initialized at INFO level
+2026-02-04 13:43:32.255 [INFO] schedule_zero.portal_configuration - [PortalConfig] [portal_configuration.py:191:load_portal_config] Loaded portal config: ScheduleZero Default Portal v1.0.0
+2026-02-04 13:43:32.255 [INFO] schedule_zero.portal_configuration - [PortalConfig] [portal_configuration.py:192:load_portal_config] Portal root: C:\Users\johnl\windev\schedule-zero-islands\dist\portal1
+2026-02-04 13:43:32.255 [INFO] schedule_zero.portal_configuration - [PortalConfig] [portal_configuration.py:193:load_portal_config] Component libraries: htmx, web-components
+2026-02-04 13:43:32.255 [INFO] schedule_zero.portal_configuration - [PortalConfig] [portal_configuration.py:194:load_portal_config] Enabled microsites: 4/4
+2026-02-04 13:43:32.255 [INFO] schedule_zero.tornado_app_server - [TornadoServer] [tornado_app_server.py:85:<module>] Registered microsite: Dashboard at /dash
+2026-02-04 13:43:32.256 [INFO] schedule_zero.tornado_app_server - [TornadoServer] [tornado_app_server.py:85:<module>] Registered microsite: Schedules Manager at /schedules
+2026-02-04 13:43:32.257 [INFO] schedule_zero.tornado_app_server - [TornadoServer] [tornado_app_server.py:85:<module>] Registered microsite: Handlers Registry at /handlers
+2026-02-04 13:43:32.257 [INFO] schedule_zero.tornado_app_server - [TornadoServer] [tornado_app_server.py:85:<module>] Registered microsite: Documentation at /docs
 
 ================================================================================
   ScheduleZero Deployment: DEFAULT
@@ -11,15 +19,25 @@ Log Level:        INFO
 Log File:         Console only
 ================================================================================
 
-2025-10-28 07:23:18 - INFO     - schedule_zero.tornado_app_server - [TornadoServer.start_server] Starting ScheduleZero Server
-2025-10-28 07:23:18 - INFO     - schedule_zero.app_configuration - Loaded config from config.yaml
-2025-10-28 07:23:18 - INFO     - schedule_zero.handler_registry - [HandlerRegistry.load] (path=handler_registry.yaml count=1) Registry loaded
-2025-10-28 07:23:18 - INFO     - schedule_zero.tornado_app_server - [TornadoServer.start_server] Using database: sqlite+aiosqlite:///schedulezero_jobs.db
-2025-10-28 07:23:18 - INFO     - schedule_zero.zmq_registration_server - [ZMQRegistrationServer.start] (address=tcp://127.0.0.1:4242) Starting ZMQ server task
-2025-10-28 07:23:18 - INFO     - schedule_zero.zmq_registration_server - [ZMQRegistrationServer._run_server] (address=tcp://127.0.0.1:4242) ZMQ server listening
-C:\pypo\schedule-zero-RMwcuXLV-py3.12\Lib\site-packages\zmq\_future.py:718: RuntimeWarning: Proactor event loop does not implement add_reader family of methods required for zmq. Registering an additional selector thread for add_reader support via tornado. Use `asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())` to avoid this warning.
-  self._get_loop()
-2025-10-28 07:23:18 - INFO     - apscheduler._schedulers.async_ - Scheduler started
-2025-10-28 07:23:18 - INFO     - schedule_zero.tornado_app_server - [TornadoServer.start_server] APScheduler started with persistent data store
-2025-10-28 07:23:18 - INFO     - schedule_zero.tornado_app_server - [TornadoServer.start_server] (address=127.0.0.1 port=8888) Tornado server ready
-2025-10-28 07:23:18 - INFO     - apscheduler._schedulers.async_ - Cleaned up expired job results and finished schedules
+2026-02-04 13:43:32.258 [INFO] schedule_zero.tornado_app_server - [TornadoServer.start_server] [tornado_app_server.py:256:start_server] Starting ScheduleZero Server
+2026-02-04 13:43:32.258 [WARNING] schedule_zero.app_configuration - Config file 'config.yaml' not found. Using defaults.
+2026-02-04 13:43:32.259 [INFO] schedule_zero.handler_registry - [HandlerRegistry.load] [handler_registry.py:81:load] (path=handler_registry.yaml count=2) Registry loaded
+2026-02-04 13:43:32.259 [INFO] schedule_zero.tornado_app_server - [TornadoServer.start_server] [tornado_app_server.py:267:start_server] Initialized execution log (max 1000 records)
+2026-02-04 13:43:32.259 [INFO] schedule_zero.tornado_app_server - [TornadoServer.start_server] [tornado_app_server.py:271:start_server] Using database: sqlite+aiosqlite:///schedulezero_jobs.db
+2026-02-04 13:43:32.273 [INFO] schedule_zero.zmq_registration_server - [ZMQRegistrationServer.start] [zmq_registration_server.py:230:start] (address=tcp://127.0.0.1:4242) Starting ZMQ server task
+2026-02-04 13:43:32.290 [ERROR] schedule_zero.zmq_registration_server - [ZMQRegistrationServer._run_server] [zmq_registration_server.py:207:_run_server] (address=tcp://127.0.0.1:4242) Failed to run ZMQ server: Address in use (addr='tcp://127.0.0.1:4242')
+Traceback (most recent call last):
+  File "C:\Users\johnl\windev\schedule-zero\src\schedule_zero\zmq_registration_server.py", line 164, in _run_server
+    self.socket.bind(self.address)
+  File "C:\pypo\schedule-zero-RMwcuXLV-py3.12\Lib\site-packages\zmq\sugar\socket.py", line 320, in bind
+    super().bind(addr)
+  File "zmq/backend/cython/_zmq.py", line 1009, in zmq.backend.cython._zmq.Socket.bind
+    _check_rc(rc)
+    ^^^^^^^^^^^
+  File "zmq/backend/cython/_zmq.py", line 190, in zmq.backend.cython._zmq._check_rc
+    raise ZMQError(errno)
+    ^^^^^^^^^^^
+zmq.error.ZMQError: Address in use (addr='tcp://127.0.0.1:4242')
+2026-02-04 13:43:32.291 [INFO] schedule_zero.zmq_registration_server - [ZMQRegistrationServer._run_server] [zmq_registration_server.py:210:_run_server] ZMQ server shutting down
+2026-02-04 13:43:32.776 [CRITICAL] schedule_zero.tornado_app_server - [TornadoServer.start_server] [tornado_app_server.py:308:start_server] ZMQ server task failed to start
+2026-02-04 13:43:32.776 [INFO] schedule_zero.tornado_app_server - [TornadoServer.main] [tornado_app_server.py:386:main] Server stopped

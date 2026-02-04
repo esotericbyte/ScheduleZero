@@ -25,6 +25,7 @@ from .job_execution_log_api import (
     JobExecutionClearHandler
 )
 from .docs_handler import DocsHandler, DocsIndexHandler
+from .portal_config_api import PortalConfigHandler
 
 __all__ = [
     'BaseAPIHandler',
@@ -44,4 +45,5 @@ __all__ = [
     'JobExecutionClearHandler',
     'DocsHandler',
     'DocsIndexHandler',
+    'PortalConfigHandler',
 ]
