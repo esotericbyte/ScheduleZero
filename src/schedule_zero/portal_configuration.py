@@ -15,7 +15,7 @@ If no portal_config.yaml exists, server gracefully degrades to:
 import os
 import yaml
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 from dataclasses import dataclass
 
 from .logging_config import get_logger

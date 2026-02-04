@@ -8,7 +8,7 @@ NO PROCESS MANAGEMENT - just metrics collection and health monitoring.
 import zmq.asyncio
 import psutil
 import asyncio
-from typing import Dict, List, Optional
+from typing import Optional
 from datetime import datetime
 
 # Note: This would inherit from ZMQHandlerBase in real implementation

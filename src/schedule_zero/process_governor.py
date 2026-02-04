@@ -12,7 +12,7 @@ import os
 import atexit
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, Optional, List
+from typing import Optional
 
 from .logging_config import setup_logging, get_logger
 from .deployment_config import get_deployment_config

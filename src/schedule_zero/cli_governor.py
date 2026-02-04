@@ -20,7 +20,7 @@ import os
 import atexit
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Optional
 
 from src.schedule_zero.logging_config import setup_logging, get_logger
 from src.schedule_zero.deployment_config import get_deployment_config

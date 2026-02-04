@@ -6,7 +6,6 @@ each with its own routes, templates, and static assets.
 """
 
 from pathlib import Path
-from typing import List, Tuple
 import tornado.web
 
 

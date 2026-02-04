@@ -5,7 +5,7 @@ Captures job execution history for monitoring and analytics.
 Provides in-memory circular buffer with optional database persistence.
 """
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any
+from typing import Optional, Any
 from collections import deque
 from dataclasses import dataclass, asdict
 import threading
