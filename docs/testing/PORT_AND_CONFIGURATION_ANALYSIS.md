@@ -224,7 +224,7 @@ Stop-Process -Id 266064 -Force
    - Add port checks to conftest.py
    - Log all PIDs to test_logs/pids.json
 
-### Long-Term Architecture (v0.4.0)
+### Long-Term Architecture (v0.3.0)
 
 1. **Port Manager Service** (2-3 days)
    - Central port allocation for deployments
