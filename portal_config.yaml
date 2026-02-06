@@ -9,8 +9,10 @@ admin_contact: "admin@example.com"
 
 # Portal Root - REQUIRED
 # Path to the portal directory (absolute or relative to this config file)
-# With Vite build system, this should point to schedule-zero-islands build output
-portal_root: "../schedule-zero-islands/dist/portal1"
+# Production: Points to Vite build output with bundled JS components
+# Development: Points to Python repo portal with CDN-loaded components
+# portal_root: "../schedule-zero-islands/dist/portal1"  # Production (requires pnpm build)
+portal_root: "src/schedule_zero/portal"  # Development mode
 
 # Component Library Configuration
 # Defines which custom HTML tags/components are valid for validation
@@ -60,10 +62,12 @@ static_path: "static"  # Relative to portal_root
 static_url_prefix: "/static/"
 
 # Template Configuration
-template_cache: true  # Set to false for development
-template_autoreload: false  # Set to true for development
+template_cache: false  # Development mode: disable cache
+template_autoreload: true  # Development mode: watch for changes
 
-# Development Mode Settings
-# Uncomment these for local development
-# portal_root: "src/schedule_zero/portal"  # Use Python-served portal instead of Vite build
-# template_autoreload: true
+# Development Mode (ACTIVE)
+# Using Python-served portal from src/schedule_zero/portal
+# For production deployment:
+#   1. Build JS components: cd ../schedule-zero-islands && pnpm install && pnpm build
+#   2. Update portal_root: "../schedule-zero-islands/dist/portal1"
+#   3. Set template_cache: true, template_autoreload: false
