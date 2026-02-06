@@ -25,6 +25,7 @@ packages = [{include = "schedule_zero", from = "src"}]
 
 [tool.poetry.scripts]
 schedulezero = "schedule_zero.cli_governor:main"
+schedulezero-repl = "schedule_zero.interactive_repl:main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
