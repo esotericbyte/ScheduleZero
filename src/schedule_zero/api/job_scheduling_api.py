@@ -168,7 +168,7 @@ class RunNowHandler(BaseAPIHandler):
         try:
             # Generate a unique ID for this immediate execution
             immediate_job_id = f"immediate_{handler_id}_{job_method}_{datetime.now().timestamp()}"
-            result = await job_executor(immediate_job_id, handler_id, job_method, job_params)
+            result = await job_executor(handler_id, job_method, job_params, immediate_job_id)
             logger.info(f"Executed job immediately via API: Handler={handler_id}, Method={job_method}")
             self.write_json({
                 "status": "success",
