@@ -9,7 +9,14 @@ import subprocess
 import requests
 import psutil
 import sqlite3
+import socket
 from pathlib import Path
+
+
+def is_port_in_use(port):
+    """Check if a port is in use."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(('127.0.0.1', port)) == 0
 
 
 def cleanup_database():
@@ -54,7 +61,7 @@ def terminate_process_tree(pid):
         # Terminate parent
         parent.terminate()
         
-        # Wait for termination
+        # Wait for termination with timeout
         gone, alive = psutil.wait_procs(children + [parent], timeout=5)
         
         # Force kill if still alive
@@ -62,6 +69,15 @@ def terminate_process_tree(pid):
             try:
                 p.kill()
             except psutil.NoSuchProcess:
+                pass
+        
+        # Final verification - wait a bit more
+        time.sleep(0.5)
+        if psutil.pid_exists(pid):
+            try:
+                psutil.Process(pid).kill()
+                psutil.wait_procs([psutil.Process(pid)], timeout=2)
+            except:
                 pass
                 
     except psutil.NoSuchProcess:
@@ -74,6 +90,7 @@ def server_process():
     import logging
     logger = logging.getLogger("conftest.server")
     
+
     # Clean database before starting server
     logger.info("Cleaning database before test session...")
     cleanup_database()
@@ -138,9 +155,21 @@ def server_process():
     
     yield proc
     
-    # Teardown - use the specific PID to terminate
+    # TEARDOWN - use the specific PID to terminate
     logger.info(f"Stopping server (PID: {server_pid})...")
     terminate_process_tree(server_pid)
+    
+    # VERIFY ports are released
+    server_ports = [8888, 4242]
+    max_wait = 10
+    for waited in range(max_wait):
+        if not any(is_port_in_use(port) for port in server_ports):
+            logger.info(f"Server ports released after {waited+1}s")
+            break
+        time.sleep(1)
+    else:
+        logger.warning(f"Server ports still in use after {max_wait}s - may cause issues on next run")
+    
     logger.info("Server stopped")
     
     # Clean database after tests complete
@@ -215,9 +244,22 @@ def handler_process(server_process):
     
     yield proc
     
-    # Teardown - use the specific PID to terminate
+    # TEARDOWN - use the specific PID to terminate
     logger.info(f"Stopping handler (PID: {handler_pid})...")
     terminate_process_tree(handler_pid)
+    
+    # VERIFY handler port is released
+    # ZMQ sockets can take longer to release
+    handler_port = 4244
+    max_wait = 15
+    for waited in range(max_wait):
+        if not is_port_in_use(handler_port):
+            logger.info(f"Handler port released after {waited+1}s")
+            break
+        time.sleep(1)
+    else:
+        logger.warning(f"Handler port {handler_port} still in use after {max_wait}s - may cause issues on next run")
+    
     logger.info("Handler stopped")
 
 
