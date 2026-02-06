@@ -5,6 +5,7 @@ Provides common functionality for JSON APIs, error handling, and response format
 """
 import logging
 import json
+import os
 import tornado.web
 
 logger = logging.getLogger(__name__)
@@ -133,8 +134,12 @@ class IndexHandler(tornado.web.RequestHandler):
         admin_contact = self.config.get('admin_contact', 'N/A')
         title = self.config.get('title', 'ScheduleZero')
         
+        # Use relative path from template_path root
+        # template_path contains portal or portal_minimal directory
+        template_name = os.path.join(os.path.basename(self.template_path), "index.html")
+        
         self.render(
-            "index.html",
+            template_name,
             title=title,
             instance_name=instance_name,
             description=description,

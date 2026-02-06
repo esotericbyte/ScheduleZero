@@ -2,6 +2,15 @@
 
 ## Critical Rules
 
+### pyproject.toml - POETRY-MANAGED SECTIONS
+**NEVER MANUALLY EDIT POETRY-MANAGED SECTIONS OF pyproject.toml!**
+- Poetry-managed sections: `[project.dependencies]`, `[tool.poetry]` (except scripts), `[build-system]`
+- **ONLY** use `poetry add` or `poetry remove` commands to change dependencies
+- **NEVER** directly edit the dependencies array or tool.poetry sections
+- Manual edits allowed ONLY in: `[tool.pytest.ini_options]`, `[tool.poetry.scripts]`
+- If dependencies need changes: Use `poetry add package` or `poetry remove package`
+- LLM models tend to violate this rule - be vigilant!
+
 ### README.md
 **WE ARE NOT ADDING DETAILS TO THE README!**
 - ask for agreement before making changes

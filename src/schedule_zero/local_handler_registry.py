@@ -11,7 +11,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 import threading
-from datetime import datetime
+from datetime import datetime, UTC
 from functools import partial
 from typing import Any, Callable
 from functools import wraps
@@ -60,11 +60,11 @@ class LocalHandlerRegistry:
             methods = [func.__name__]
         
         with self._lock:
-            now = datetime.utcnow().isoformat()
+            now = datetime.now(UTC).isoformat()
             self._handlers[handler_id] = {
                 'function': func,
                 'methods': methods,
-                'is_async': asyncio.iscoroutinefunction(func),
+                'is_async': inspect.iscoroutinefunction(func),
                 'registered_at': now,
                 'last_updated': now,
                 'status': 'Active',
@@ -75,7 +75,7 @@ class LocalHandlerRegistry:
             "Registered local handler",
             handler_id=handler_id,
             methods=methods,
-            is_async=asyncio.iscoroutinefunction(func)
+            is_async=inspect.iscoroutinefunction(func)
         )
         return True
     

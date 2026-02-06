@@ -35,11 +35,14 @@ Successfully upgraded from APScheduler 4.0.0a5 to 4.0.0a6 with no breaking chang
 - 60+ tests failing due to schema mismatch
 - Many async tests not running (missing pytest-asyncio)
 
-### After Upgrade (Current Status)
-- ✅ 28 tests passing (integration and unit tests)
+### After Upgrade (Current Status - Day 2)
+- ✅ 57 tests passing (unit and integration tests)
 - ✅ All async tests working (16 tests verified)
-- ⚠️ Some tests still need fixtures updated (server_process tests)
+- ✅ Ding-dong pytest test suite working (3 quick tests + 1 slow 3-min test)
+- ✅ Deprecation warnings fixed (datetime.utcnow, asyncio.iscoroutinefunction)
+- ⚠️ 25 server_process tests failing (portal configuration issue - see below)
 - ⚠️ 4 ZMQ socket recovery tests expected to fail (testing error conditions)
+- ⚠️ 1 test needs config update (test_ding_dong_brief)
 
 ### Verified Working
 - ✅ APScheduler 4.0.0a6 schema creation
@@ -53,8 +56,14 @@ Successfully upgraded from APScheduler 4.0.0a5 to 4.0.0a6 with no breaking chang
 
 ### Known Issues
 1. **Old database compatibility**: Old databases MUST be deleted (schema incompatible)
-2. **Deprecation warning**: `datetime.utcnow()` in `local_handler_registry.py` line 63
-3. **Server process tests**: Some fixture tests need updating for a6 behavior
+2. ✅ **FIXED - Deprecation warning**: datetime.utcnow() replaced with datetime.now(UTC) in local_handler_registry.py
+3. ✅ **FIXED - Deprecation warning**: asyncio.iscoroutinefunction() replaced with inspect.iscoroutinefunction()
+4. **Portal configuration issue**: portal_config.yaml points to non-existent Vite build directory
+   - Path: `../schedule-zero-islands/dist/portal1` (doesn't exist)
+   - Impact: 25 server_process tests fail with FileNotFoundError on index.html
+   - **Solution A**: Build the frontend with Vite (`npm run build` in schedule-zero-islands/)
+   - **Solution B**: Point portal_config to src/schedule_zero/portal for basic portal
+   - **Solution C**: Run tests without portal (API-only mode) - requires test fixture update
 
 ## API Compatibility
 
@@ -71,10 +80,12 @@ Successfully upgraded from APScheduler 4.0.0a5 to 4.0.0a6 with no breaking chang
 - [x] Add pytest-asyncio
 - [x] Verify core tests pass
 
-### Day 2-3 (Critical Fixes)
-- [ ] Fix server_process fixture tests
-- [ ] Update test database cleanup strategy
-- [ ] Fix deprecation warning in local_handler_registry.py
+### Day 2-3 (Critical Fixes) - IN PROGRESS
+- [x] Fix deprecation warnings (datetime.utcnow, asyncio.iscoroutinefunction)
+- [x] Identify server_process test failures (portal config issue)
+- [ ] Fix portal configuration for tests (choose Solution A, B, or C above)
+- [ ] Update test_ding_dong_brief config initialization
+- [ ] Rerun full test suite after portal fix
 
 ### Days 4-5 (Portal Tests)
 - [ ] Create unit tests for portal handlers
@@ -119,8 +130,14 @@ From upstream changelog:
 
 ## Conclusion
 
-The APScheduler 4.0.0a6 upgrade was **successful and low-risk**. The main effort was:
-1. Cleaning old databases (schema incompatible)
-2. Adding pytest-asyncio for test infrastructure
+The APScheduler 4.0.0a6 upgrade was **successful**. Day 2 progress:
+1. ✅ Fixed deprecation warnings (datetime + asyncio)
+2. ✅ Created working pytest test suite for ding-dong handler
+3. ✅ Identified root cause of 25 server_process test failures (portal config)
 
-No code changes were needed in the application itself. Recommend proceeding with merge after completing Day 2-3 critical fixes.
+**Next Steps:**
+- Fix portal configuration (recommend Solution B: point to src/schedule_zero/portal)
+- Verify all 57+ passing tests continue to work
+- Consider fast-tracking merge once portal issue resolved
+
+No code changes were needed for APScheduler compatibility. All issues are configuration-related.
