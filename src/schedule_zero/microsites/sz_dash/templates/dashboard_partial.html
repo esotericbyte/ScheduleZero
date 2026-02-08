@@ -5,21 +5,21 @@
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-icon">📊</div>
-            <div class="stat-value">{{ stats.total_schedules }}</div>
+            <div class="stat-value">{{ stats['total_schedules'] }}</div>
             <div class="stat-label">Total Schedules</div>
-            <div class="stat-sublabel">{{ stats.active_schedules }} active</div>
+            <div class="stat-sublabel">{{ stats['active_schedules'] }} active</div>
         </div>
         
         <div class="stat-card">
             <div class="stat-icon">⚙️</div>
-            <div class="stat-value">{{ stats.total_handlers }}</div>
+            <div class="stat-value">{{ stats['total_handlers'] }}</div>
             <div class="stat-label">Total Handlers</div>
-            <div class="stat-sublabel">{{ stats.active_handlers }} active</div>
+            <div class="stat-sublabel">{{ stats['active_handlers'] }} active</div>
         </div>
         
         <div class="stat-card">
             <div class="stat-icon">✓</div>
-            <div class="stat-value">{{ stats.jobs_today }}</div>
+            <div class="stat-value">{{ stats['jobs_today'] }}</div>
             <div class="stat-label">Jobs Today</div>
             <div class="stat-sublabel">Completed executions</div>
         </div>
@@ -43,11 +43,11 @@
                 {% for schedule in recent_schedules %}
                 <div class="schedule-item">
                     <div class="schedule-info">
-                        <strong>{{ schedule.task }}</strong>
-                        <span class="schedule-meta">{{ schedule.trigger }}</span>
+                        <strong>{{ schedule['task'] }}</strong>
+                        <span class="schedule-meta">{{ schedule['trigger'] }}</span>
                     </div>
                     <div class="schedule-next-run">
-                        Next: {{ schedule.next_run }}
+                        Next: {{ schedule['next_run'] }}
                     </div>
                 </div>
                 {% end %}

@@ -1,8 +1,44 @@
-# ScheduleZero Web Components
+# ScheduleZero Documentation
 
 ## Overview
 
-This project provides the **frontend Web Components** (islands) for the ScheduleZero distributed task scheduling platform. These components are built with Vite and deployed to the Python Tornado backend.
+**ScheduleZero** is a distributed task scheduling platform built on:
+- **Backend**: Python + Tornado + APScheduler 4.0 (alpha) + ZeroMQ
+- **Frontend**: Microsite Architecture with Islands of Interactivity
+- **Components**: HTMX + Vanilla JS + Vue/Vuetify islands
+
+⛔ **EXPERIMENTAL SOFTWARE**: Built on APScheduler 4.0.0a6 (alpha). All code subject to change. NOT production-ready.
+
+## Microsite Architecture
+
+ScheduleZero uses a **microsite-based portal framework** where each section (Dashboard, Schedules, Handlers, Docs) is an independent "microsite" with:
+- **Own routes**: Python Tornado handlers
+- **Own templates**: Tornado templates with shared layout
+- **Own assets**: CSS, JS, static files
+- **Own islands**: Web Components for interactivity
+
+### Technology Stack
+
+```
+┌─────────────────────────────────────────────┐
+│           Shared Layout (Bootstrap 5)       │
+│  ┌────────────┬──────────────────────────┐ │
+│  │ Navigation │   Microsite Content       │ │
+│  │  (Static)  │   (Swapped via HTMX)     │ │
+│  │            │                           │ │
+│  │ Dashboard  │  ┌─────────────────────┐ │ │
+│  │ Schedules  │  │ HTMX: Fetch HTML    │ │ │
+│  │ Handlers   │  │ Vanilla JS: Simple  │ │ │
+│  │ Docs       │  │ Vue+Vuetify: Tables │ │ │
+│  │            │  └─────────────────────┘ │ │
+│  └────────────┴──────────────────────────┘ │
+└─────────────────────────────────────────────┘
+```
+
+**Islands Philosophy**: Use the simplest tool for each interaction:
+- **HTMX**: Link clicks, form submissions, simple updates
+- **Vanilla JS**: Buttons, copy-to-clipboard, flash messages  
+- **Vue+Vuetify**: Complex data tables, forms with validation
 
 ## Platform Vision
 

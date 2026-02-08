@@ -5,7 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}ScheduleZero{% end %}</title>
     
-    <!-- Container CSS -->
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    
+    <!-- Container CSS (custom overrides) -->
     <link rel="stylesheet" href="/static/_container/css/layout.css">
     
     <!-- Microsite-specific CSS -->
@@ -17,21 +21,93 @@
     <!-- Container Web Components -->
     <script src="/static/_container/js/components/sz-nav.js"></script>
 </head>
-<body>
-    <!-- Navigation -->
-    <sz-nav active="{{ active_site }}">
-        <nav-item href="/dash" icon="📊" name="dash">Dashboard</nav-item>
-        <nav-item href="/schedules" icon="📅" name="schedules">Schedules</nav-item>
-        <nav-item href="/handlers" icon="🔌" name="handlers">Handlers</nav-item>
-        <nav-item href="/docs" icon="📖" name="docs">Docs</nav-item>
-    </sz-nav>
+<body class="d-flex">
+    <!-- Navigation Sidebar -->
+    <nav class="bg-dark text-white d-flex flex-column flex-shrink-0 p-3" style="width: 280px; min-height: 100vh;">
+        <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none border-bottom border-secondary pb-3 mb-3">
+            <span class="fs-4">⚡ ScheduleZero</span>
+        </a>
+        <ul class="nav nav-pills flex-column mb-auto">
+            <li class="nav-item">
+                <a href="/dash/" 
+                   hx-get="/dash/" 
+                   hx-target="#content" 
+                   hx-push-url="true"
+                   class="nav-link {% if active_site == 'dash' %}active{% end %} text-white" 
+                   aria-current="page">
+                    <i class="bi bi-speedometer2 me-2"></i>
+                    Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="/schedules/" 
+                   hx-get="/schedules/" 
+                   hx-target="#content" 
+                   hx-push-url="true"
+                   class="nav-link {% if active_site == 'schedules' %}active{% end %} text-white">
+                    <i class="bi bi-calendar3 me-2"></i>
+                    Schedules
+                </a>
+            </li>
+            <li>
+                <a href="/handlers/" 
+                   hx-get="/handlers/" 
+                   hx-target="#content" 
+                   hx-push-url="true"
+                   class="nav-link {% if active_site == 'handlers' %}active{% end %} text-white">
+                    <i class="bi bi-plug me-2"></i>
+                    Handlers
+                </a>
+            </li>
+            <li>
+                <a href="/docs/" 
+                   class="nav-link {% if active_site == 'docs' %}active{% end %} text-white">
+                    <i class="bi bi-book me-2"></i>
+                    Documentation
+                </a>
+            </li>
+        </ul>
+        <hr class="border-secondary">
+        <div class="dropdown">
+            <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-gear-fill me-2"></i>
+                <strong>Settings</strong>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
+                <li><a class="dropdown-item" href="#">Deployment: <strong>{% if deployment_name %}{{ deployment_name }}{% else %}default{% end %}</strong></a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="/api/health">Health Check</a></li>
+            </ul>
+        </div>
+    </nav>
     
     <!-- Main Content Area -->
-    <main id="content" class="microsite-content">
-        {% block content %}{% end %}
+    <main class="flex-grow-1 bg-light" style="overflow-y: auto;">
+        <div class="container-fluid p-4" id="content">
+            {% block content %}{% end %}
+        </div>
     </main>
     
     <!-- Microsite-specific JS -->
     {% block microsite_js %}{% end %}
+    
+    <!-- Bootstrap 5 JS Bundle (includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- HTMX Navigation Integration -->
+    <script>
+        // Update active nav state after navigation
+        document.body.addEventListener('htmx:afterSwap', (event) => {
+            if (event.detail.target.id === 'content') {
+                const url = new URL(window.location.href);
+                const path = url.pathname;
+                
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    const href = link.getAttribute('href');
+                    link.classList.toggle('active', path.startsWith(href));
+                });
+            }
+        });
+    </script>
 </body>
 </html>

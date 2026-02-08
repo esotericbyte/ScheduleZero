@@ -4,52 +4,45 @@ Handlers Registry Microsite Routes
 Provides views for browsing and managing registered handlers.
 """
 
-import tornado.web
+from ..base import MicrositeHandler
 
 
-class HandlersListHandler(tornado.web.RequestHandler):
+class HandlersListHandler(MicrositeHandler):
     """Display list of all registered handlers."""
-    
-    def initialize(self, registry, registry_lock):
-        """Initialize with handler registry."""
-        self.registry = registry
-        self.registry_lock = registry_lock
-        
-        # Set template path for this microsite
-        import os
-        self.template_path = os.path.join(os.path.dirname(__file__), 'templates')
     
     async def get(self):
         """Render handlers list page."""
-        async with self.registry_lock:
-            handlers = list(self.registry.list_handlers())
+        # TODO: Get handlers from registry when dependency injection is added
+        handlers = []
         
-        self.render('handlers_list.html', handlers=handlers)
+        self.render_microsite(
+            'microsites/sz_handlers/templates/handlers_list',
+            handlers=handlers
+        )
 
 
-class HandlerDetailHandler(tornado.web.RequestHandler):
+class HandlerDetailHandler(MicrositeHandler):
     """Display details for a specific handler."""
     
     def initialize(self, registry, registry_lock):
         """Initialize with handler registry."""
         self.registry = registry
         self.registry_lock = registry_lock
-        
-        # Set template path for this microsite
-        import os
-        self.template_path = os.path.join(os.path.dirname(__file__), 'templates')
     
     async def get(self, handler_id):
         """Render handler detail page."""
-        async with self.registry_lock:
-            handler = self.registry.get_handler(handler_id)
+        with self.registry_lock:
+            handler = self.registry.get(handler_id)
         
         if not handler:
             self.set_status(404)
-            self.render('handler_not_found.html', handler_id=handler_id)
+            self.write("<h1>Handler not found</h1>")
             return
         
-        self.render('handler_detail.html', handler=handler)
+        self.render_microsite(
+            'microsites/sz_handlers/templates/handler_detail',
+            handler=handler
+        )
 
 
 # Routes for this microsite

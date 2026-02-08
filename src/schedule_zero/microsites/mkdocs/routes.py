@@ -7,9 +7,10 @@ Uses iframe embedding to show MkDocs content while keeping SZ navigation visible
 
 import tornado.web
 from pathlib import Path
+from ..base import MicrositeHandler
 
 
-class DocsWrapperHandler(tornado.web.RequestHandler):
+class DocsWrapperHandler(MicrositeHandler):
     """
     Render the docs page with MkDocs content embedded in an iframe.
     Shows ScheduleZero navigation with docs content.
@@ -20,9 +21,8 @@ class DocsWrapperHandler(tornado.web.RequestHandler):
         # Default to index if no path specified
         iframe_path = path.strip('/') if path else "index.html"
         
-        self.render(
-            'mkdocs/templates/docs_wrapper.html',
-            active_site='docs',
+        self.render_microsite(
+            'microsites/mkdocs/templates/docs_wrapper',
             iframe_path=iframe_path
         )
 
@@ -79,3 +79,7 @@ class DocsContentHandler(tornado.web.StaticFileHandler):
 routes = [
     (r"/(.*)", DocsWrapperHandler),  # Catch all paths, render wrapper
 ]
+
+# Additional routes that need to be registered separately
+# (not part of the microsite prefix pattern)
+docs_content_route = (r"/docs-content/(.*)", DocsContentHandler, {})

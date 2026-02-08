@@ -4,38 +4,29 @@ Schedules Manager Microsite Routes
 Provides views for managing scheduled jobs.
 """
 
-import tornado.web
+from ..base import MicrositeHandler
 
 
-class SchedulesListHandler(tornado.web.RequestHandler):
+class SchedulesListHandler(MicrositeHandler):
     """Display list of all scheduled jobs."""
-    
-    def initialize(self, scheduler):
-        """Initialize with scheduler."""
-        self.scheduler = scheduler
-        
-        # Set template path for this microsite
-        import os
-        self.template_path = os.path.join(os.path.dirname(__file__), 'templates')
     
     async def get(self):
         """Render schedules list page."""
-        # Get all schedules from APScheduler
-        schedules = await self.scheduler.get_schedules()
+        # TODO: Get schedules from scheduler when dependency injection is added
+        schedules = []
         
-        self.render('schedules_list.html', schedules=schedules)
+        self.render_microsite(
+            'microsites/sz_schedules/templates/schedules_list',
+            schedules=schedules
+        )
 
 
-class ScheduleDetailHandler(tornado.web.RequestHandler):
+class ScheduleDetailHandler(MicrositeHandler):
     """Display details for a specific schedule."""
     
     def initialize(self, scheduler):
         """Initialize with scheduler."""
         self.scheduler = scheduler
-        
-        # Set template path for this microsite
-        import os
-        self.template_path = os.path.join(os.path.dirname(__file__), 'templates')
     
     async def get(self, schedule_id):
         """Render schedule detail page."""
@@ -43,13 +34,16 @@ class ScheduleDetailHandler(tornado.web.RequestHandler):
             schedule = await self.scheduler.get_schedule(schedule_id)
         except Exception:
             self.set_status(404)
-            self.render('schedule_not_found.html', schedule_id=schedule_id)
+            self.write("<h1>Schedule not found</h1>")
             return
         
-        self.render('schedule_detail.html', schedule=schedule)
+        self.render_microsite(
+            'microsites/sz_schedules/templates/schedule_detail',
+            schedule=schedule
+        )
 
 
-class ScheduleCreateHandler(tornado.web.RequestHandler):
+class ScheduleCreateHandler(MicrositeHandler):
     """Create a new schedule."""
     
     def initialize(self, scheduler, registry, registry_lock):
@@ -57,17 +51,16 @@ class ScheduleCreateHandler(tornado.web.RequestHandler):
         self.scheduler = scheduler
         self.registry = registry
         self.registry_lock = registry_lock
-        
-        # Set template path for this microsite
-        import os
-        self.template_path = os.path.join(os.path.dirname(__file__), 'templates')
     
     async def get(self):
         """Render schedule creation form."""
-        async with self.registry_lock:
-            handlers = list(self.registry.list_handlers())
+        with self.registry_lock:
+            handlers = list(self.registry.values())
         
-        self.render('schedule_create.html', handlers=handlers)
+        self.render_microsite(
+            'microsites/sz_schedules/templates/schedule_create',
+            handlers=handlers
+        )
 
 
 # Routes for this microsite

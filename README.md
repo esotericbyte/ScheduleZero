@@ -33,14 +33,24 @@
 
 ## ⚠️ Project Status
 
-**ScheduleZero is in early development (Alpha stage)**
+**⛔ NOT PRODUCTION READY - EXPERIMENTAL SOFTWARE ⛔**
 
-- **Core**: Built on [APScheduler 4.0](https://github.com/agronholm/apscheduler) (pre-release)
+**ScheduleZero is in early development (Alpha stage) - ALL CODE SUBJECT TO CHANGE**
+
+- **Project Status**: ⚠️ **EXPERIMENTAL - DO NOT USE IN PRODUCTION**
+- **API Stability**: ❌ NO API STABILITY GUARANTEES - Breaking changes expected
+- **Code Status**: All code is subject to change without notice or deprecation warnings
+- **Core Dependency**: Built on [APScheduler 4.0.0a6](https://github.com/agronholm/apscheduler) ⚠️ **ALPHA SOFTWARE**
+- **APScheduler Status**: Currently in alpha, API may change, not recommended for production deployments
 - **Security**: ⚠️ **No authentication/authorization** - See [SECURITY_AND_NETWORKING.md](docs/SECURITY_AND_NETWORKING.md)
-- **Production**: Not recommended yet - authentication required for public deployment
-- **Demo**: Coming soon (requires security implementation first)
+- **Production**: ❌ **ABSOLUTELY NOT RECOMMENDED** - requires APScheduler 4.0 stable release + authentication implementation
+- **Intended Use**: Development, testing, proof-of-concept, learning purposes ONLY
 
-> � **Security Note**: Current implementation has no access control. Authentication & authorization are **top priority** for demo deployment. See security roadmap in docs.
+> ⛔ **CRITICAL WARNING**: This is experimental software in active development. The entire codebase may be refactored, renamed, or restructured at any time. Features may be added, changed, or removed without notice. DO NOT depend on this code for anything critical.
+
+> ⚠️ **Critical Dependencies**: This project depends on APScheduler 4.0 which is currently in alpha (4.0.0a6). The APScheduler team has not declared it production-ready. Use in production environments at your own risk.
+
+> 🔒 **Security Note**: Current implementation has no access control. Authentication & authorization are **top priority** before any public deployment.
 
 <!-- 
 ================================================================================

@@ -1,64 +1,79 @@
-{% extends "portal/templates/layout.html" %}
+{% extends "../../_container/templates/layout.html" %}
 
 {% block title %}Dashboard - ScheduleZero{% end %}
 
 {% block content %}
-<div class="dashboard">
-    <h1>Dashboard</h1>
+<div class="py-2">
+    <h1 class="mb-4">Dashboard</h1>
     
-    <!-- System Statistics -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-icon">📊</div>
-            <div class="stat-value">{{ stats.total_schedules }}</div>
-            <div class="stat-label">Total Schedules</div>
-            <div class="stat-sublabel">{{ stats.active_schedules }} active</div>
+    <!-- System Statistics - Bootstrap Grid -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="fs-1 mb-2">📊</div>
+                    <h3 class="card-title">{{ stats['total_schedules'] }}</h3>
+                    <p class="card-text text-muted">Total Schedules</p>
+                    <small class="text-muted">{{ stats['active_schedules'] }} active</small>
+                </div>
+            </div>
         </div>
         
-        <div class="stat-card">
-            <div class="stat-icon">⚙️</div>
-            <div class="stat-value">{{ stats.total_handlers }}</div>
-            <div class="stat-label">Total Handlers</div>
-            <div class="stat-sublabel">{{ stats.active_handlers }} active</div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="fs-1 mb-2">⚙️</div>
+                    <h3 class="card-title">{{ stats['total_handlers'] }}</h3>
+                    <p class="card-text text-muted">Total Handlers</p>
+                    <small class="text-muted">{{ stats['active_handlers'] }} active</small>
+                </div>
+            </div>
         </div>
         
-        <div class="stat-card">
-            <div class="stat-icon">✓</div>
-            <div class="stat-value">{{ stats.jobs_today }}</div>
-            <div class="stat-label">Jobs Today</div>
-            <div class="stat-sublabel">Completed executions</div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="fs-1 mb-2">✓</div>
+                    <h3 class="card-title">{{ stats['jobs_today'] }}</h3>
+                    <p class="card-text text-muted">Jobs Today</p>
+                    <small class="text-muted">Completed executions</small>
+                </div>
+            </div>
         </div>
     </div>
     
     <!-- Recent Schedules -->
-    <div class="recent-section card">
-        <div class="section-header">
-            <h2>Recent Schedules</h2>
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">Recent Schedules</h2>
             <button 
                 hx-get="/api/schedules" 
                 hx-target="#schedule-list"
                 hx-swap="innerHTML"
-                class="btn-refresh">
-                🔄 Refresh
+                class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
             </button>
         </div>
         
-        <div id="schedule-list" class="schedule-list">
-            {% if recent_schedules %}
-                {% for schedule in recent_schedules %}
-                <div class="schedule-item">
-                    <div class="schedule-info">
-                        <strong>{{ schedule.task }}</strong>
-                        <span class="schedule-meta">{{ schedule.trigger }}</span>
+        <div class="card-body">
+            <div id="schedule-list" class="list-group list-group-flush">
+                {% if recent_schedules %}
+                    {% for schedule in recent_schedules %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ schedule['task'] }}</strong>
+                            <br>
+                            <small class="text-muted">{{ schedule['trigger'] }}</small>
+                        </div>
+                        <div class="text-end">
+                            <small class="text-muted">Next: {{ schedule['next_run'] }}</small>
+                        </div>
                     </div>
-                    <div class="schedule-next-run">
-                        Next: {{ schedule.next_run }}
-                    </div>
-                </div>
+                    {% end %}
+                {% else %}
+                    <p class="text-muted text-center py-3">No schedules yet. Create your first schedule to get started!</p>
                 {% end %}
-            {% else %}
-                <p class="empty-state">No schedules yet. Create your first schedule to get started!</p>
-            {% end %}
+            </div>
         </div>
     </div>
     

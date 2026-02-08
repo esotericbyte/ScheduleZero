@@ -80,6 +80,17 @@ class MicrositeHandler(tornado.web.RequestHandler):
         # Add current path for navigation
         kwargs['current_path'] = self.get_current_path()
         
+        # Extract active_site from path (e.g., /dash -> dash, /schedules -> schedules)
+        path = self.get_current_path()
+        if path.startswith('/'):
+            path = path[1:]  # Remove leading slash
+        active_site = path.split('/')[0] if path else 'dash'
+        kwargs['active_site'] = active_site
+        
+        # Add deployment name for display
+        import os
+        kwargs['deployment_name'] = os.environ.get('SCHEDULEZERO_DEPLOYMENT', 'default')
+        
         if self.is_htmx_request():
             # HTMX request: render just the content fragment
             template = f'{template_name}_partial.html'

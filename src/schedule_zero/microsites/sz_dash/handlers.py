@@ -55,9 +55,9 @@ class DashboardHandler(MicrositeHandler):
             'jobs_today': 0
         }
         
-        # Count handlers
+        # Count handlers (thread-safe with thread lock)
         if self.registry and self.registry_lock:
-            async with self.registry_lock.reader:
+            with self.registry_lock:
                 stats['total_handlers'] = len(self.registry)
                 stats['active_handlers'] = sum(
                     1 for h in self.registry.values() 
